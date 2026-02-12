@@ -1,0 +1,395 @@
+@import "tailwindcss";
+@import "../design-system/tokens.css";
+
+/* Luxury Theme configuration via Tailwind v4 syntax (or compatible) */
+@theme {
+  --color-primary: var(--color-primary);
+  --color-background: var(--color-background);
+  --color-accent: var(--color-accent);
+
+  --font-serif: var(--font-playfair-display);
+  --font-sans: var(--font-inter);
+
+  --animate-fade-in: fadeIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+:root {
+  /* Ensure tokens are available if not picked up by tokens.css import immediately */
+  --background: var(--color-background);
+  --foreground: var(--color-primary);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.7;
+  font-size: 16px;
+  /* Luxury breathing room */
+  font-weight: 400;
+  /* Inter Regular */
+}
+
+/* Luxury Hierarchy */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  /* Semi-Bold for Playfair */
+  letter-spacing: 0.2px;
+  line-height: 1.3;
+  text-transform: none;
+  /* No ALL CAPS */
+}
+
+h1 {
+  font-size: clamp(44px, 5vw, 56px);
+}
+
+h2 {
+  font-size: clamp(32px, 4vw, 40px);
+}
+
+h3 {
+  font-size: clamp(24px, 3vw, 28px);
+}
+
+p {
+  margin-bottom: 1.5rem;
+  letter-spacing: 0px;
+}
+
+button,
+.btn,
+a {
+  text-transform: none;
+  letter-spacing: 0.3px;
+  font-weight: 500;
+}
+
+/* Luxury Text Selection */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-background);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-16px) rotate(2deg);
+  }
+}
+
+@keyframes floatAlt {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-12px) rotate(-2deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Golden Cursor Follower */
+.cursor-follower {
+  position: fixed;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(circle, var(--color-gold-deep) 0%, rgba(212, 175, 55, 0.4) 70%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s ease-out, opacity 0.3s ease;
+  mix-blend-mode: multiply;
+}
+
+.cursor-follower::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: var(--color-gold-deep);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Utilities for Luxury Layouts */
+.luxury-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Luxury Border System */
+.luxury-frame {
+  position: relative;
+}
+
+.luxury-frame::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  border: 1px solid var(--color-accent);
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.corner-accent {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-color: var(--color-primary);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 10;
+  transition: all 0.5s ease;
+}
+
+.corner-tl {
+  top: 15px;
+  left: 15px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.corner-tr {
+  top: 15px;
+  right: 15px;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+
+.corner-bl {
+  bottom: 15px;
+  left: 15px;
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+}
+
+.corner-br {
+  bottom: 15px;
+  right: 15px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+/* Mobile Adjustment */
+@media (max-width: 768px) {
+  .luxury-frame::before {
+    top: 10px;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+  }
+}
+
+/* ========================================
+   Glass Morphism Cards
+   ======================================== */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px) saturate(180%);
+  -webkit-backdrop-filter: blur(10px) saturate(180%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode variant */
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(30, 30, 30, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ========================================
+   Scroll-Triggered Animations
+   ======================================== */
+.scroll-animate {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.scroll-animate.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered animation delays for multiple items */
+.scroll-animate:nth-child(1) {
+  transition-delay: 0s;
+}
+
+.scroll-animate:nth-child(2) {
+  transition-delay: 0.1s;
+}
+
+.scroll-animate:nth-child(3) {
+  transition-delay: 0.2s;
+}
+
+.scroll-animate:nth-child(4) {
+  transition-delay: 0.3s;
+}
+
+.scroll-animate:nth-child(5) {
+  transition-delay: 0.4s;
+}
+
+.scroll-animate:nth-child(6) {
+  transition-delay: 0.5s;
+}
+
+/* ========================================
+   Product Card Hover Effects
+   ======================================== */
+.product-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   Gradient Background Animation
+   ======================================== */
+.animated-gradient {
+  background: linear-gradient(135deg,
+      var(--color-gold-deep) 0%,
+      var(--color-accent) 50%,
+      var(--color-primary) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* ========================================
+   Skip Link (Accessibility)
+   ======================================== */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--space-xs) var(--space-sm);
+  z-index: 10000;
+  text-decoration: none;
+  font-size: var(--fs-sm);
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .scroll-animate {
+    opacity: 1;
+    transform: none;
+  }
+
+  .product-card-hover:hover {
+    transform: none;
+  }
+}

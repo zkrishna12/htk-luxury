@@ -1,0 +1,49 @@
+:root {
+    /* Luxury Tokens - 2025 Architecture */
+    /* Base Colors */
+    --color-primary: #1F3D2B;
+    --color-background: #F8F6F2;
+    --color-accent: #BFA76A;
+    --color-gold-deep: #D4AF37;
+
+    /* Background Variations */
+    --color-bg-light: #FDFCF8;
+    --color-bg-warm: #F3F1EC;
+    --color-bg-neutral: #EBE9E4;
+    --color-bg-ivory: #FAF9F6;
+    --color-bg-cream: #F2F0EB;
+
+    /* UI Colors */
+    --color-white: #FFFFFF;
+    --color-border-light: rgba(31, 61, 43, 0.1);
+
+    /* ========================================
+       Fluid Typography Scale
+       ======================================== */
+    --fs-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    --fs-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);
+    --fs-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+    --fs-lg: clamp(1.125rem, 1rem + 0.625vw, 1.5rem);
+    --fs-xl: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+    --fs-2xl: clamp(2rem, 1.5rem + 2.5vw, 4rem);
+
+    /* ========================================
+       8px Grid Spacing System
+       ======================================== */
+    --space-xs: 0.5rem;    /* 8px */
+    --space-sm: 1rem;      /* 16px */
+    --space-md: 1.5rem;    /* 24px */
+    --space-lg: 2rem;      /* 32px */
+    --space-xl: 3rem;      /* 48px */
+    --space-2xl: 5rem;     /* 80px */
+
+    /* Legacy spacing (for compatibility) */
+    --spacing-base: 1rem;
+    --spacing-section: 8rem;
+    /* Luxury Space */
+
+    --font-serif: var(--font-playfair-display);
+    --font-sans: var(--font-inter);
+
+    --animation-slow: 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}

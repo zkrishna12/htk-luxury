@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Products: Public Read, Permissive Write for Launch (Stock Updates)
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true; // TEMPORARY: Allow Repair Script to Fix Data
+    }
+
+    // Coupons: Public Read (to validate), Admin Write
+    match /coupons/{couponId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Orders: User create, Admin read/write
+    match /orders/{orderId} {
+      allow create: if true; // Guests can order
+      allow get: if true; // Allow reading single order by ID (Invoice)
+      allow list: if request.auth != null && request.auth.token.admin == true; // No directory listing
+      allow update: if request.auth != null && request.auth.token.admin == true;
+    }
+
+    // User Data: Owner access
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /cart/{cartId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // Leads: Public create (Newsletter)
+    match /leads/{leadId} {
+        allow create: if true;
+        allow read: if request.auth != null;
+    }
+  }
+}
