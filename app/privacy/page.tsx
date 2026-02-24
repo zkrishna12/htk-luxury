@@ -1,36 +1,74 @@
 import React from 'react';
-import { NextPage } from 'next';
 
-const PrivacyPage: NextPage = () => {
-    return (
-        <div className="max-w-4xl mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Privacy Policy</h1>
-            <p className="mb-2">Last updated: 2026-02-23</p>
-            <h2 className="text-xl font-semibold mt-6">Introduction</h2>
-            <p className="mb-4">This privacy policy explains how we collect, use, disclose, and safeguard your information when you visit our app. Please read this policy carefully. If you do not agree with the terms of this privacy policy, please do not access the application.</p>
-            <h2 className="text-xl font-semibold mt-6">Information We Collect</h2>
-            <p className="mb-4">We may collect information about you in a variety of ways, including:</p>
-            <ul className="list-disc mb-4 pl-5">
-                <li className="mb-2">Personal Data: Personally identifiable information such as your name, shipping address, email address, and telephone number that you voluntarily give when you register with the application.</li>
-                <li className="mb-2">Derivative Data: Information our servers automatically collect when you access the application, such as your IP address, your browser type, your operating system, your access times, and the pages you have viewed directly before and after accessing the application.</li>
-            </ul>
-            <h2 className="text-xl font-semibold mt-6">Use of Your Information</h2>
-            <p className="mb-4">Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you via the application to:</p>
-            <ul className="list-disc mb-4 pl-5">
-                <li className="mb-2">Create and manage your account.</li>
-                <li className="mb-2">Email you regarding your account or order.</li>
-                <li className="mb-2">Fulfill and manage purchases, orders, payments, and other transactions related to the application.</li>
-            </ul>
-            <h2 className="text-xl font-semibold mt-6">Disclosure of Your Information</h2>
-            <p className="mb-4">We may share information we have collected about you in certain situations. Your information may be disclosed as follows:</p>
-            <ul className="list-disc mb-4 pl-5">
-                <li className="mb-2">By Law or to Protect Rights: If we believe the release of information about you is necessary to respond to legal process, to investigate or remedy potential violations of our policies, or to protect the rights, property, and safety of others, we may share your information as permitted or required by any applicable law.</li>
-            </ul>
-            <h2 className="text-xl font-semibold mt-6">Contact Us</h2>
-            <p className="mb-4">If you have questions or comments about this Privacy Policy, please contact us at:</p>
-            <p className="mb-4">Email: support@example.com</p>
-        </div>
-    );
+const PrivacyPolicy: React.FC = () => {
+  return (
+    <div className="max-w-4xl mx-auto px-4">
+      <h1 className="text-3xl font-bold my-6">Privacy Policy</h1>
+      <nav className="my-4">
+        <h2 className="font-semibold">Table of Contents:</h2>
+        <ul className="list-disc pl-5">
+          <li><a href="#section1" className="text-blue-500 hover:underline">1. Introduction</a></li>
+          <li><a href="#section2" className="text-blue-500 hover:underline">2. Information We Collect</a></li>
+          <li><a href="#section3" className="text-blue-500 hover:underline">3. How We Use Your Information</a></li>
+          <li><a href="#section4" className="text-blue-500 hover:underline">4. Cookies and Tracking Technologies</a></li>
+          <li><a href="#section5" className="text-blue-500 hover:underline">5. Data Sharing and Disclosure</a></li>
+          <li><a href="#section6" className="text-blue-500 hover:underline">6. Data Security</a></li>
+          <li><a href="#section7" className="text-blue-500 hover:underline">7. Your Rights</a></li>
+          <li><a href="#section8" className="text-blue-500 hover:underline">8. Third-Party Services</a></li>
+          <li><a href="#section9" className="text-blue-500 hover:underline">9. Children's Privacy</a></li>
+          <li><a href="#section10" className="text-blue-500 hover:underline">10. Changes to This Privacy Policy</a></li>
+          <li><a href="#section11" className="text-blue-500 hover:underline">11. Contact Us</a></li>
+        </ul>
+      </nav>
+      <section id="section1" className="my-4">
+        <h2 className="text-xl font-semibold">1. Introduction</h2>
+        <p>HTK Enterprises values your privacy. This Privacy Policy outlines how we collect, use, disclose, and protect your information.</p>
+      </section>
+      <section id="section2" className="my-4">
+        <h2 className="text-xl font-semibold">2. Information We Collect</h2>
+        <p>We may collect personal identification information from you in a variety of ways, including but not limited to your name, email address, and phone number.</p>
+      </section>
+      <section id="section3" className="my-4">
+        <h2 className="text-xl font-semibold">3. How We Use Your Information</h2>
+        <p>Your information helps us improve our services and communication with you. We may use your information for processing transactions, sending periodic emails, and improving customer service.</p>
+      </section>
+      <section id="section4" className="my-4">
+        <h2 className="text-xl font-semibold">4. Cookies and Tracking Technologies</h2>
+        <p>We use cookies and similar tracking technologies to enhance your experience on our site.</p>
+      </section>
+      <section id="section5" className="my-4">
+        <h2 className="text-xl font-semibold">5. Data Sharing and Disclosure</h2>
+        <p>We do not sell, trade, or otherwise transfer your personal identification information to outside parties without your consent.</p>
+      </section>
+      <section id="section6" className="my-4">
+        <h2 className="text-xl font-semibold">6. Data Security</h2>
+        <p>Your data security is important to us. We implement a variety of security measures to maintain the safety of your personal information.</p>
+      </section>
+      <section id="section7" className="my-4">
+        <h2 className="text-xl font-semibold">7. Your Rights</h2>
+        <p>You have the right to request access to the personal data we hold about you and to request corrections if any information is inaccurate.</p>
+      </section>
+      <section id="section8" className="my-4">
+        <h2 className="text-xl font-semibold">8. Third-Party Services</h2>
+        <p>Our website may contain links to third-party sites. We are not responsible for the privacy practices of these sites.</p>
+      </section>
+      <section id="section9" className="my-4">
+        <h2 className="text-xl font-semibold">9. Children's Privacy</h2>
+        <p>Our services are not directed to children under the age of 13. We do not knowingly collect personal data from children.</p>
+      </section>
+      <section id="section10" className="my-4">
+        <h2 className="text-xl font-semibold">10. Changes to This Privacy Policy</h2>
+        <p>We may update this Privacy Policy periodically to reflect changes in our practices.</p>
+      </section>
+      <section id="section11" className="my-4">
+        <h2 className="text-xl font-semibold">11. Contact Us</h2>
+        <p>If you have any questions or concerns about this Privacy Policy, please contact us:</p>
+        <p>Email: <a href="mailto:support@htkenterprises.net" className="text-blue-500 hover:underline">support@htkenterprises.net</a></p>
+        <p>Address: 13-01-33B Samykannu Street, Alagarnayakkanpatti, Sithayankottai 624708</p>
+        <p>Phone: <a href="tel:8438380900" className="text-blue-500 hover:underline">8438380900</a></p>
+      </section>
+    </div>
+  );
 };
 
-export default PrivacyPage;
+export default PrivacyPolicy;
