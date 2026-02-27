@@ -1,19 +1,23 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import HeroSection from '@/components/HeroSection';
 import ProductShowcase from '@/components/ProductShowcase';
 
-/* Intersection Observer hook for scroll-triggered animations */
-function useScrollReveal(threshold = 0.15) {
+/* ========================================
+   Apple-style Parallax Scroll Hook
+   ======================================== */
+function useParallaxReveal(threshold = 0.12) {
     const ref = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(false);
+    const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (prefersReducedMotion) {
             setIsVisible(true);
+            setScrollProgress(1);
             return;
         }
 
@@ -24,17 +28,34 @@ function useScrollReveal(threshold = 0.15) {
                     observer.unobserve(entry.target);
                 }
             },
-            { threshold, rootMargin: '0px 0px -50px 0px' }
+            { threshold, rootMargin: '0px 0px -60px 0px' }
         );
 
         if (ref.current) observer.observe(ref.current);
-        return () => observer.disconnect();
+
+        const handleScroll = () => {
+            if (!ref.current) return;
+            const rect = ref.current.getBoundingClientRect();
+            const windowH = window.innerHeight;
+            const progress = Math.min(1, Math.max(0, (windowH - rect.top) / (windowH + rect.height)));
+            setScrollProgress(progress);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        handleScroll();
+
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('scroll', handleScroll);
+        };
     }, [threshold]);
 
-    return { ref, isVisible };
+    return { ref, isVisible, scrollProgress };
 }
 
-/* Animated counter component */
+/* ========================================
+   Animated Counter
+   ======================================== */
 function AnimatedCounter({ target, suffix = '', duration = 2000 }: { target: number; suffix?: string; duration?: number }) {
     const [count, setCount] = useState(0);
     const [hasStarted, setHasStarted] = useState(false);
@@ -50,65 +71,59 @@ function AnimatedCounter({ target, suffix = '', duration = 2000 }: { target: num
             },
             { threshold: 0.5 }
         );
-
         if (ref.current) observer.observe(ref.current);
         return () => observer.disconnect();
     }, [hasStarted]);
 
     useEffect(() => {
         if (!hasStarted) return;
-
         let startTime: number;
         const animate = (timestamp: number) => {
             if (!startTime) startTime = timestamp;
             const progress = Math.min((timestamp - startTime) / duration, 1);
-            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
             setCount(Math.floor(eased * target));
             if (progress < 1) requestAnimationFrame(animate);
         };
-
         requestAnimationFrame(animate);
     }, [hasStarted, target, duration]);
 
     return <span ref={ref} className="counter-value">{count}{suffix}</span>;
 }
 
+/* ========================================
+   Main HomeClient Component
+   ======================================== */
 export default function HomeClient() {
-    const features = useScrollReveal();
-    const philosophy = useScrollReveal();
-    const stats = useScrollReveal();
-    const showcase = useScrollReveal(0.1);
-    const trustBar = useScrollReveal(0.1);
+    const marquee = useParallaxReveal(0.1);
+    const features = useParallaxReveal(0.1);
+    const philosophy = useParallaxReveal(0.15);
+    const showcase = useParallaxReveal(0.08);
+    const stats = useParallaxReveal(0.1);
+    const journey = useParallaxReveal(0.1);
+    const trustBadge = useParallaxReveal(0.1);
 
     return (
         <main className="min-h-screen relative">
-            {/* Premium Hero Section */}
+            {/* ========== HERO ========== */}
             <HeroSection />
 
-            {/* ======== Scrolling Trust Marquee ======== */}
-            <div ref={trustBar.ref} className={`py-5 bg-[var(--color-primary)] overflow-hidden transition-opacity duration-1000 ${trustBar.isVisible ? 'opacity-100' : 'opacity-0'}`}>
-                <div className="marquee-track flex items-center gap-12 whitespace-nowrap" style={{ width: 'max-content' }}>
-                    {[...Array(2)].map((_, setIdx) => (
+            {/* ========== DARK TRANSITION - Scrolling Trust Marquee ========== */}
+            <div ref={marquee.ref} className="apple-section-dark py-6 overflow-hidden relative">
+                <div className={`marquee-track flex items-center gap-14 whitespace-nowrap apple-fade-up ${marquee.isVisible ? 'revealed' : ''}`}
+                     style={{ width: 'max-content' }}>
+                    {[...Array(3)].map((_, setIdx) => (
                         <React.Fragment key={setIdx}>
                             {[
-                                '100% Organic',
-                                '★',
-                                'Women-Led Enterprise',
-                                '★',
-                                'Ships All India',
-                                '★',
-                                'Ethically Sourced',
-                                '★',
-                                'From Tamil Nadu with Love',
-                                '★',
-                                'Since 2023',
-                                '★',
-                                'No Chemicals',
-                                '★',
-                                'Pure & Traceable',
-                                '★'
+                                '100% Organic', '✦', 'Women-Led Enterprise', '✦',
+                                'Ships All India', '✦', 'Ethically Sourced', '✦',
+                                'From Tamil Nadu with Love', '✦', 'Since 2023', '✦',
+                                'No Chemicals', '✦', 'Pure & Traceable', '✦'
                             ].map((text, i) => (
-                                <span key={`${setIdx}-${i}`} className={`text-xs uppercase tracking-[0.3em] ${text === '★' ? 'text-[var(--color-gold-deep)] text-[8px]' : 'text-[var(--color-background)] opacity-70'}`}>
+                                <span key={`${setIdx}-${i}`}
+                                      className={`text-[10px] uppercase tracking-[0.35em] ${text === '✦'
+                                          ? 'text-[#D4AF37] text-[8px]'
+                                          : 'text-white/40'}`}>
                                     {text}
                                 </span>
                             ))}
@@ -117,17 +132,25 @@ export default function HomeClient() {
                 </div>
             </div>
 
-            {/* ======== Feature Highlights ======== */}
-            <section className="py-24 md:py-32 bg-[var(--color-background)] relative">
-                <div ref={features.ref} className="luxury-container">
-                    {/* Section header */}
-                    <div className={`text-center mb-16 section-reveal ${features.isVisible ? 'visible' : ''}`}>
-                        <p className="text-xs uppercase tracking-[0.3em] text-[var(--color-accent)] mb-4">Why Choose Us</p>
-                        <h2 className="text-3xl md:text-4xl font-serif text-[var(--color-primary)]">Rooted in Tradition,<br/>Refined for You</h2>
+            {/* ========== FEATURE HIGHLIGHTS - Dark section with Apple grid ========== */}
+            <section className="apple-section-dark py-28 md:py-36 relative overflow-hidden">
+                {/* Subtle grid pattern */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                    backgroundSize: '80px 80px'
+                }} />
+
+                <div ref={features.ref} className="luxury-container relative z-10">
+                    {/* Section header - slide up */}
+                    <div className={`text-center mb-20 apple-text-reveal ${features.isVisible ? 'revealed' : ''}`}>
+                        <p className="text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-5">Why Choose Us</p>
+                        <h2 className="text-3xl md:text-5xl font-serif text-white font-bold leading-tight">
+                            Rooted in Tradition,<br/>Refined for You
+                        </h2>
                     </div>
 
-                    {/* Feature cards */}
-                    <div className="grid md:grid-cols-3 gap-8 md:gap-12">
+                    {/* Feature cards - staggered reveal with 3D tilt on hover */}
+                    <div className="grid md:grid-cols-3 gap-6 md:gap-10">
                         {[
                             {
                                 icon: (
@@ -137,7 +160,7 @@ export default function HomeClient() {
                                     </svg>
                                 ),
                                 title: 'Certified Organic',
-                                description: 'Every product is sourced from certified organic farms in the Western Ghats. Zero chemicals, zero compromise.'
+                                description: 'Every product sourced from certified organic farms in the Western Ghats. Zero chemicals, zero compromise.'
                             },
                             {
                                 icon: (
@@ -146,7 +169,7 @@ export default function HomeClient() {
                                     </svg>
                                 ),
                                 title: 'Farm to Doorstep',
-                                description: 'Direct from farmers in Thandikudi, Kodaikanal, Ooty, and Coorg. No middlemen, ensuring freshness and fair pricing.'
+                                description: 'Direct from farmers in Thandikudi, Kodaikanal, Ooty, and Coorg. No middlemen, ensuring freshness.'
                             },
                             {
                                 icon: (
@@ -155,74 +178,79 @@ export default function HomeClient() {
                                     </svg>
                                 ),
                                 title: 'Women Empowered',
-                                description: 'A women-led enterprise supporting local communities. Every purchase helps sustain traditional farming families.'
+                                description: 'A women-led enterprise supporting local communities. Every purchase sustains traditional farming families.'
                             }
                         ].map((feature, i) => (
                             <div
                                 key={i}
-                                className={`feature-card bg-white border border-[var(--color-primary)]/5 p-8 md:p-10 text-center section-reveal ${features.isVisible ? 'visible' : ''}`}
-                                style={{ transitionDelay: `${200 + i * 150}ms` }}
+                                className={`apple-feature-card apple-stagger-reveal ${features.isVisible ? 'revealed' : ''}`}
+                                style={{ transitionDelay: `${300 + i * 200}ms` }}
                             >
-                                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[var(--color-bg-warm)] text-[var(--color-accent)] mb-6">
+                                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 text-[#D4AF37] mb-6 border border-white/10">
                                     {feature.icon}
                                 </div>
-                                <h3 className="font-serif text-xl text-[var(--color-primary)] mb-3">{feature.title}</h3>
-                                <p className="text-sm text-[var(--color-primary)] opacity-60 leading-relaxed">{feature.description}</p>
+                                <h3 className="font-serif text-xl text-white mb-3 font-semibold">{feature.title}</h3>
+                                <p className="text-sm text-white/40 leading-relaxed">{feature.description}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ======== Navigation Paths ======== */}
-            <nav className="py-24 flex flex-col md:flex-row justify-center gap-12 md:gap-24 text-lg font-sans relative z-10 bg-[var(--color-background)]">
-                <a href="/organic" className="group relative py-2 text-center">
-                    <span className="text-[var(--color-primary)]">Organic Goods</span>
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-[var(--color-gold-deep)] transition-all duration-700 group-hover:w-full"></span>
-                </a>
-                <a href="/corporate-gifting" className="group relative py-2 text-center">
-                    <span className="text-[var(--color-primary)]">Corporate Gifting</span>
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-[var(--color-gold-deep)] transition-all duration-700 group-hover:w-full"></span>
-                </a>
-                <a href="/shop" className="group relative py-2 text-center">
-                    <span className="text-[var(--color-primary)]">Shop All</span>
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-px bg-[var(--color-gold-deep)] transition-all duration-700 group-hover:w-full"></span>
-                </a>
+            {/* ========== NAVIGATION PATHS - Minimal links ========== */}
+            <nav className="apple-section-dark py-20 flex flex-col md:flex-row justify-center gap-12 md:gap-24 text-lg font-sans relative z-10 border-t border-white/5 border-b border-b-white/5">
+                {[
+                    { href: '/organic', label: 'Organic Goods' },
+                    { href: '/corporate-gifting', label: 'Corporate Gifting' },
+                    { href: '/shop', label: 'Shop All' },
+                ].map((link, i) => (
+                    <a key={i} href={link.href} className="group relative py-2 text-center">
+                        <span className="text-white/60 group-hover:text-white transition-colors duration-500">{link.label}</span>
+                        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-[#D4AF37] transition-all duration-700 group-hover:w-full" />
+                    </a>
+                ))}
             </nav>
 
-            {/* Decorative Divider */}
-            <div className="flex justify-center py-4 bg-[var(--color-background)]">
-                <div className="h-px w-24 bg-[var(--color-gold-deep)] opacity-40"></div>
-            </div>
-
-            {/* ======== Product Showcase Carousel ======== */}
-            <div ref={showcase.ref} className={`section-reveal ${showcase.isVisible ? 'visible' : ''}`}>
+            {/* ========== PRODUCT SHOWCASE - Full-bleed dark carousel ========== */}
+            <div ref={showcase.ref} className={`apple-scale-reveal ${showcase.isVisible ? 'revealed' : ''}`}>
                 <ProductShowcase />
             </div>
 
-            {/* ======== Philosophy Teaser ======== */}
-            <section ref={philosophy.ref} className="py-24 md:py-32 px-8 bg-[var(--color-background)]">
-                <div className={`max-w-2xl mx-auto font-serif text-2xl md:text-3xl text-[var(--color-primary)] opacity-80 leading-relaxed text-center relative z-10 section-reveal ${philosophy.isVisible ? 'visible' : ''}`}>
-                    <p className="mb-4">
+            {/* ========== PHILOSOPHY - Cinematic text on dark ========== */}
+            <section ref={philosophy.ref} className="apple-section-dark py-28 md:py-40 px-8 relative overflow-hidden">
+                {/* Ambient background glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04]"
+                     style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 60%)' }} />
+
+                <div className="max-w-2xl mx-auto text-center relative z-10"
+                     style={{ transform: `translateY(${(1 - philosophy.scrollProgress) * 30}px)` }}>
+                    <p className={`apple-text-reveal text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-8 ${philosophy.isVisible ? 'revealed' : ''}`}
+                       style={{ transitionDelay: '0ms' }}>
+                        Our Philosophy
+                    </p>
+                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-white/80 leading-relaxed mb-6 ${philosophy.isVisible ? 'revealed' : ''}`}
+                       style={{ transitionDelay: '200ms' }}>
                         We believe food should be pure, honest, and traceable.
                     </p>
-                    <p className="mb-0">
+                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-white/80 leading-relaxed mb-10 ${philosophy.isVisible ? 'revealed' : ''}`}
+                       style={{ transitionDelay: '400ms' }}>
                         We believe gifting should carry meaning, not noise.
                     </p>
-                    <div className="mt-10">
-                        <a href="/about" className="inline-block text-sm font-sans text-[var(--color-accent)] border-b border-[var(--color-accent)] pb-1 hover:opacity-60 transition-opacity">
+                    <div className={`apple-text-reveal ${philosophy.isVisible ? 'revealed' : ''}`}
+                         style={{ transitionDelay: '600ms' }}>
+                        <a href="/about" className="inline-block text-sm font-sans text-[#D4AF37] border-b border-[#D4AF37]/40 pb-1 hover:border-[#D4AF37] transition-all duration-500">
                             Read Our Philosophy
                         </a>
                     </div>
                 </div>
             </section>
 
-            {/* ======== Stats / Impact Section ======== */}
-            <section ref={stats.ref} className="py-20 bg-[var(--color-primary)] relative overflow-hidden">
-                {/* Subtle pattern overlay */}
-                <div className="absolute inset-0 opacity-5" style={{
-                    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.3) 1px, transparent 0)',
-                    backgroundSize: '40px 40px'
+            {/* ========== STATS / IMPACT - Number reveal with parallax ========== */}
+            <section ref={stats.ref} className="apple-section-dark py-24 relative overflow-hidden border-t border-white/5">
+                {/* Dot pattern */}
+                <div className="absolute inset-0 opacity-[0.02]" style={{
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.5) 1px, transparent 0)',
+                    backgroundSize: '48px 48px'
                 }} />
 
                 <div className="luxury-container relative z-10">
@@ -235,26 +263,60 @@ export default function HomeClient() {
                         ].map((stat, i) => (
                             <div
                                 key={i}
-                                className={`section-reveal ${stats.isVisible ? 'visible' : ''}`}
+                                className={`apple-stagger-reveal ${stats.isVisible ? 'revealed' : ''}`}
                                 style={{ transitionDelay: `${i * 150}ms` }}
                             >
-                                <div className="text-4xl md:text-5xl font-serif text-[var(--color-gold-deep)] mb-2">
+                                <div className="text-4xl md:text-6xl font-serif text-[#D4AF37] mb-3 font-bold">
                                     <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                                 </div>
-                                <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-background)] opacity-60">{stat.label}</p>
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">{stat.label}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ======== Trust Badge ======== */}
-            <section className="py-16 bg-[var(--color-bg-warm)]">
+            {/* ========== THE JOURNEY - Horizontal scroll-reveal steps ========== */}
+            <section ref={journey.ref} className="apple-section-dark py-28 md:py-36 relative overflow-hidden border-t border-white/5">
+                <div className="luxury-container">
+                    <div className={`text-center mb-20 apple-text-reveal ${journey.isVisible ? 'revealed' : ''}`}>
+                        <p className="text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-5">The Journey</p>
+                        <h2 className="text-3xl md:text-5xl font-serif text-white font-bold">From Farm to You</h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-4 gap-8">
+                        {[
+                            { step: '01', title: 'Harvested', desc: 'Hand-picked from organic farms in the Western Ghats' },
+                            { step: '02', title: 'Processed', desc: 'Minimally processed to preserve natural goodness' },
+                            { step: '03', title: 'Packaged', desc: 'Sealed in premium containers for freshness' },
+                            { step: '04', title: 'Delivered', desc: 'Shipped directly to your doorstep across India' },
+                        ].map((item, i) => (
+                            <div
+                                key={i}
+                                className={`apple-stagger-reveal text-center md:text-left ${journey.isVisible ? 'revealed' : ''}`}
+                                style={{ transitionDelay: `${300 + i * 200}ms` }}
+                            >
+                                <div className="text-5xl md:text-6xl font-serif text-[#D4AF37]/20 font-bold mb-4">{item.step}</div>
+                                <h3 className="font-serif text-lg text-white mb-2 font-semibold">{item.title}</h3>
+                                <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
+                                {i < 3 && (
+                                    <div className="hidden md:block mt-6 h-[1px] bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ========== TRUST BADGE - Final light section transition ========== */}
+            <section ref={trustBadge.ref} className="py-20 bg-[var(--color-bg-warm)] relative overflow-hidden">
                 <div className="max-w-4xl mx-auto text-center px-8">
-                    <p className="text-sm uppercase tracking-[0.3em] text-[var(--color-accent)] mb-4">
+                    <p className={`apple-text-reveal text-[10px] uppercase tracking-[0.4em] text-[var(--color-accent)] mb-5 ${trustBadge.isVisible ? 'revealed' : ''}`}
+                       style={{ transitionDelay: '0ms' }}>
                         Trusted Since 2023
                     </p>
-                    <p className="font-serif text-xl text-[var(--color-primary)] opacity-70">
+                    <p className={`apple-text-reveal font-serif text-xl md:text-2xl text-[var(--color-primary)] opacity-70 leading-relaxed ${trustBadge.isVisible ? 'revealed' : ''}`}
+                       style={{ transitionDelay: '200ms' }}>
                         3 years of delivering nature&apos;s finest to discerning homes and businesses across India.
                     </p>
                 </div>

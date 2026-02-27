@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "../design-system/tokens.css";
 
-/* Luxury Theme configuration via Tailwind v4 syntax (or compatible) */
+/* Luxury Theme configuration via Tailwind v4 syntax */
 @theme {
   --color-primary: var(--color-primary);
   --color-background: var(--color-background);
@@ -14,9 +14,11 @@
 }
 
 :root {
-  /* Ensure tokens are available if not picked up by tokens.css import immediately */
   --background: var(--color-background);
   --foreground: var(--color-primary);
+  --apple-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --apple-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --apple-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html {
@@ -30,134 +32,293 @@ body {
   -webkit-font-smoothing: antialiased;
   line-height: 1.7;
   font-size: 16px;
-  /* Luxury breathing room */
   font-weight: 400;
-  /* Inter Regular */
 }
 
 /* Luxury Hierarchy */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-serif);
   font-weight: 600;
-  /* Semi-Bold for Playfair */
   letter-spacing: 0.2px;
   line-height: 1.3;
   text-transform: none;
-  /* No ALL CAPS */
 }
 
-h1 {
-  font-size: clamp(44px, 5vw, 56px);
-}
-
-h2 {
-  font-size: clamp(32px, 4vw, 40px);
-}
-
-h3 {
-  font-size: clamp(24px, 3vw, 28px);
-}
+h1 { font-size: clamp(44px, 5vw, 56px); }
+h2 { font-size: clamp(32px, 4vw, 40px); }
+h3 { font-size: clamp(24px, 3vw, 28px); }
 
 p {
   margin-bottom: 1.5rem;
   letter-spacing: 0px;
 }
 
-button,
-.btn,
-a {
+button, .btn, a {
   text-transform: none;
   letter-spacing: 0.3px;
   font-weight: 500;
 }
 
-/* Luxury Text Selection */
 ::selection {
   background: var(--color-accent);
   color: var(--color-background);
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
+/* ========================================
+   APPLE-STYLE CORE ANIMATIONS
+   ======================================== */
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Dark cinematic section base */
+.apple-section-dark {
+  background: #0a0a08;
+  position: relative;
+}
+
+/* Ambient glow orbs */
+.apple-glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  transition: transform 0.1s linear;
+}
+
+/* ========================================
+   MASK REVEAL - Apple's signature loading
+   ======================================== */
+.apple-mask-reveal {
+  clip-path: inset(100% 0 0 0);
+  transition: clip-path 1.2s var(--apple-ease-out);
+}
+
+.apple-mask-reveal.revealed {
+  clip-path: inset(0 0 0 0);
+}
+
+/* ========================================
+   TEXT REVEAL - Slide + Fade combo
+   ======================================== */
+.apple-text-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1s var(--apple-ease-out),
+              transform 1s var(--apple-ease-out);
+}
+
+.apple-text-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   STAGGER REVEAL - For card grids
+   ======================================== */
+.apple-stagger-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.9s var(--apple-ease-out),
+              transform 0.9s var(--apple-ease-out);
+}
+
+.apple-stagger-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   SCALE REVEAL - For sections
+   ======================================== */
+.apple-scale-reveal {
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 1.2s var(--apple-ease-out),
+              transform 1.2s var(--apple-ease-out);
+}
+
+.apple-scale-reveal.revealed {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ========================================
+   FADE UP - Simple fade with upward motion
+   ======================================== */
+.apple-fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s var(--apple-ease-out),
+              transform 0.8s var(--apple-ease-out);
+}
+
+.apple-fade-up.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ========================================
+   GOLDEN LINE REVEAL
+   ======================================== */
+.apple-line-reveal {
+  height: 2px;
+  width: 0;
+  margin: 0 auto;
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+  transition: width 1.4s var(--apple-ease-out);
+}
+
+.apple-line-reveal.revealed {
+  width: 120px;
+}
+
+/* ========================================
+   FLOATING PRODUCTS - 3D Perspective
+   ======================================== */
+.apple-float-product {
+  position: absolute;
+  transition: opacity 1.5s var(--apple-ease-out),
+              transform 0.1s linear;
+  will-change: transform, opacity;
+}
+
+.apple-float-product.revealed {
+  opacity: 0.15;
+}
+
+/* ========================================
+   CTA BUTTONS - Apple-style
+   ======================================== */
+.apple-cta-primary {
+  background: #D4AF37;
+  color: #0a0a08;
+  transition: all 0.5s var(--apple-ease-smooth);
+  position: relative;
+}
+
+.apple-cta-primary:hover {
+  background: #e6c44a;
+  box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+  transform: translateY(-2px);
+}
+
+.apple-cta-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: ctaShine 3s ease-in-out infinite;
+}
+
+@keyframes ctaShine {
+  0% { left: -100%; }
+  50%, 100% { left: 150%; }
+}
+
+.apple-cta-secondary {
+  color: #D4AF37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  transition: all 0.5s var(--apple-ease-smooth);
+}
+
+.apple-cta-secondary:hover {
+  border-color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  transform: translateY(-2px);
+}
+
+/* ========================================
+   FEATURE CARDS - Dark theme with border glow
+   ======================================== */
+.apple-feature-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 2.5rem;
+  text-align: center;
+  transition: all 0.6s var(--apple-ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.apple-feature-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(212, 175, 55, 0.1) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.apple-feature-card:hover {
+  border-color: rgba(212, 175, 55, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.apple-feature-card:hover::before {
+  opacity: 1;
+}
+
+/* ========================================
+   SCROLL INDICATOR LINE
+   ======================================== */
+.apple-scroll-line {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(212, 175, 55, 0.6), transparent);
+  animation: scrollLineMove 2s var(--apple-ease-smooth) infinite;
+}
+
+@keyframes scrollLineMove {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* ========================================
+   LEGACY ANIMATIONS (kept for compatibility)
+   ======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-16px) rotate(2deg);
-  }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(2deg); }
 }
 
 @keyframes floatAlt {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-12px) rotate(-2deg);
-  }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(-2deg); }
 }
 
 @keyframes shimmer {
-  0% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.6;
-    transform: scale(1.1);
-  }
-
-  100% {
-    opacity: 0.3;
-    transform: scale(1);
-  }
+  0% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+  100% { opacity: 0.3; transform: scale(1); }
 }
 
 @keyframes pulseGlow {
-
-  0%,
-  100% {
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-  }
-
-  50% {
-    box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.6); }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Golden Cursor Follower */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ========================================
+   GOLDEN CURSOR FOLLOWER
+   ======================================== */
 .cursor-follower {
   position: fixed;
   width: 24px;
@@ -183,14 +344,15 @@ a {
   transform: translate(-50%, -50%);
 }
 
-/* Utilities for Luxury Layouts */
+/* ========================================
+   LAYOUT UTILITIES
+   ======================================== */
 .luxury-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
 }
 
-/* Luxury Border System */
 .luxury-frame {
   position: relative;
 }
@@ -219,35 +381,11 @@ a {
   transition: all 0.5s ease;
 }
 
-.corner-tl {
-  top: 15px;
-  left: 15px;
-  border-top: 2px solid;
-  border-left: 2px solid;
-}
+.corner-tl { top: 15px; left: 15px; border-top: 2px solid; border-left: 2px solid; }
+.corner-tr { top: 15px; right: 15px; border-top: 2px solid; border-right: 2px solid; }
+.corner-bl { bottom: 15px; left: 15px; border-bottom: 2px solid; border-left: 2px solid; }
+.corner-br { bottom: 15px; right: 15px; border-bottom: 2px solid; border-right: 2px solid; }
 
-.corner-tr {
-  top: 15px;
-  right: 15px;
-  border-top: 2px solid;
-  border-right: 2px solid;
-}
-
-.corner-bl {
-  bottom: 15px;
-  left: 15px;
-  border-bottom: 2px solid;
-  border-left: 2px solid;
-}
-
-.corner-br {
-  bottom: 15px;
-  right: 15px;
-  border-bottom: 2px solid;
-  border-right: 2px solid;
-}
-
-/* Mobile Adjustment */
 @media (max-width: 768px) {
   .luxury-frame::before {
     top: 10px;
@@ -258,7 +396,7 @@ a {
 }
 
 /* ========================================
-   Glass Morphism Cards
+   GLASS MORPHISM CARDS
    ======================================== */
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
@@ -269,7 +407,6 @@ a {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark mode variant */
 @media (prefers-color-scheme: dark) {
   .glass-card {
     background: rgba(30, 30, 30, 0.7);
@@ -278,7 +415,7 @@ a {
 }
 
 /* ========================================
-   Scroll-Triggered Animations
+   LEGACY SCROLL ANIMATIONS
    ======================================== */
 .scroll-animate {
   opacity: 0;
@@ -291,33 +428,15 @@ a {
   transform: translateY(0);
 }
 
-/* Staggered animation delays for multiple items */
-.scroll-animate:nth-child(1) {
-  transition-delay: 0s;
-}
-
-.scroll-animate:nth-child(2) {
-  transition-delay: 0.1s;
-}
-
-.scroll-animate:nth-child(3) {
-  transition-delay: 0.2s;
-}
-
-.scroll-animate:nth-child(4) {
-  transition-delay: 0.3s;
-}
-
-.scroll-animate:nth-child(5) {
-  transition-delay: 0.4s;
-}
-
-.scroll-animate:nth-child(6) {
-  transition-delay: 0.5s;
-}
+.scroll-animate:nth-child(1) { transition-delay: 0s; }
+.scroll-animate:nth-child(2) { transition-delay: 0.1s; }
+.scroll-animate:nth-child(3) { transition-delay: 0.2s; }
+.scroll-animate:nth-child(4) { transition-delay: 0.3s; }
+.scroll-animate:nth-child(5) { transition-delay: 0.4s; }
+.scroll-animate:nth-child(6) { transition-delay: 0.5s; }
 
 /* ========================================
-   Product Card Hover Effects
+   PRODUCT CARD HOVER
    ======================================== */
 .product-card-hover {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -329,31 +448,16 @@ a {
 }
 
 /* ========================================
-   Gradient Background Animation
+   ANIMATED GRADIENT
    ======================================== */
 .animated-gradient {
-  background: linear-gradient(135deg,
-      var(--color-gold-deep) 0%,
-      var(--color-accent) 50%,
-      var(--color-primary) 100%);
+  background: linear-gradient(135deg, var(--color-gold-deep) 0%, var(--color-accent) 50%, var(--color-primary) 100%);
   background-size: 200% 200%;
   animation: gradientShift 8s ease infinite;
 }
 
-@keyframes gradientShift {
-
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
 /* ========================================
-   Skip Link (Accessibility)
+   ACCESSIBILITY
    ======================================== */
 .skip-link {
   position: absolute;
@@ -373,10 +477,8 @@ a {
 }
 
 /* ========================================
-   Hero Section Animations
+   HERO SECTION ANIMATIONS (Product Showcase)
    ======================================== */
-
-/* Background gradient orbs */
 .hero-orb {
   position: absolute;
   border-radius: 50%;
@@ -385,29 +487,23 @@ a {
 }
 
 .hero-orb-1 {
-  width: 600px;
-  height: 600px;
+  width: 600px; height: 600px;
   background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
-  top: -10%;
-  right: -5%;
+  top: -10%; right: -5%;
   animation: orbFloat1 12s ease-in-out infinite;
 }
 
 .hero-orb-2 {
-  width: 400px;
-  height: 400px;
+  width: 400px; height: 400px;
   background: radial-gradient(circle, rgba(31, 61, 43, 0.06) 0%, transparent 70%);
-  bottom: -5%;
-  left: -5%;
+  bottom: -5%; left: -5%;
   animation: orbFloat2 15s ease-in-out infinite;
 }
 
 .hero-orb-3 {
-  width: 300px;
-  height: 300px;
+  width: 300px; height: 300px;
   background: radial-gradient(circle, rgba(191, 167, 106, 0.06) 0%, transparent 70%);
-  top: 40%;
-  left: 30%;
+  top: 40%; left: 30%;
   animation: orbFloat3 10s ease-in-out infinite;
 }
 
@@ -430,14 +526,7 @@ a {
 
 /* Card shimmer effect */
 .hero-card-shimmer {
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.3) 45%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0.3) 55%,
-    transparent 60%
-  );
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.3) 45%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0.3) 55%, transparent 60%);
   background-size: 200% 100%;
   animation: cardShimmer 6s ease-in-out infinite;
   pointer-events: none;
@@ -448,7 +537,6 @@ a {
   100% { background-position: -200% 0; }
 }
 
-/* Particle drift */
 @keyframes heroParticleDrift {
   0%, 100% { transform: translate(0, 0); }
   25% { transform: translate(8px, -6px); }
@@ -456,7 +544,6 @@ a {
   75% { transform: translate(6px, -4px); }
 }
 
-/* Scroll indicator line */
 .hero-scroll-line {
   animation: scrollPulse 2s ease-in-out infinite;
 }
@@ -467,13 +554,13 @@ a {
 }
 
 /* ========================================
-   Scroll-Triggered Section Animations
+   SECTION REVEAL (legacy compat)
    ======================================== */
 .section-reveal {
   opacity: 0;
   transform: translateY(40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.8s var(--apple-ease-out),
+              transform 0.8s var(--apple-ease-out);
 }
 
 .section-reveal.visible {
@@ -484,8 +571,8 @@ a {
 .section-reveal-left {
   opacity: 0;
   transform: translateX(-40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.8s var(--apple-ease-out),
+              transform 0.8s var(--apple-ease-out);
 }
 
 .section-reveal-left.visible {
@@ -496,8 +583,8 @@ a {
 .section-reveal-right {
   opacity: 0;
   transform: translateX(40px);
-  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.8s var(--apple-ease-out),
+              transform 0.8s var(--apple-ease-out);
 }
 
 .section-reveal-right.visible {
@@ -507,8 +594,8 @@ a {
 
 /* Feature card hover */
 .feature-card {
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+  transition: transform 0.5s var(--apple-ease-out),
+              box-shadow 0.5s var(--apple-ease-out),
               border-color 0.5s ease;
 }
 
@@ -518,7 +605,7 @@ a {
   border-color: var(--color-accent);
 }
 
-/* Number counter animation */
+/* Number counter */
 .counter-value {
   display: inline-block;
   font-variant-numeric: tabular-nums;
@@ -544,26 +631,25 @@ a {
   opacity: 0.15;
 }
 
-/* Marquee scroll for trust bar */
+/* Marquee scroll */
 @keyframes marqueeScroll {
   0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  100% { transform: translateX(-33.33%); }
 }
 
 .marquee-track {
-  animation: marqueeScroll 30s linear infinite;
+  animation: marqueeScroll 35s linear infinite;
 }
 
 .marquee-track:hover {
   animation-play-state: paused;
 }
 
-/* Reduced Motion Accessibility */
+/* ========================================
+   REDUCED MOTION
+   ======================================== */
 @media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -573,17 +659,24 @@ a {
   .scroll-animate,
   .section-reveal,
   .section-reveal-left,
-  .section-reveal-right {
+  .section-reveal-right,
+  .apple-text-reveal,
+  .apple-stagger-reveal,
+  .apple-scale-reveal,
+  .apple-fade-up,
+  .apple-mask-reveal {
     opacity: 1;
     transform: none;
+    clip-path: none;
   }
 
   .product-card-hover:hover,
-  .feature-card:hover {
+  .feature-card:hover,
+  .apple-feature-card:hover {
     transform: none;
   }
 
-  .hero-orb {
+  .hero-orb, .apple-glow-orb {
     animation: none;
   }
 
@@ -593,5 +686,9 @@ a {
 
   .marquee-track {
     animation: none;
+  }
+
+  .apple-line-reveal {
+    width: 120px;
   }
 }

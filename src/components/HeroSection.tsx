@@ -1,18 +1,15 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Image from 'next/image';
 
 export default function HeroSection() {
-    const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
-    const [isClient, setIsClient] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [scrollY, setScrollY] = useState(0);
     const heroRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
-        setIsClient(true);
-        // Stagger the entrance animation
-        const timer = setTimeout(() => setIsLoaded(true), 100);
+        const timer = setTimeout(() => setIsLoaded(true), 200);
 
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (prefersReducedMotion) {
@@ -20,48 +17,70 @@ export default function HeroSection() {
             return;
         }
 
-        const handleMouseMove = (e: MouseEvent) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
+        const handleScroll = () => {
+            if (heroRef.current) {
+                const rect = heroRef.current.getBoundingClientRect();
+                if (rect.bottom > 0) {
+                    setScrollY(window.scrollY);
+                }
+            }
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('scroll', handleScroll, { passive: true });
         return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('scroll', handleScroll);
             clearTimeout(timer);
         };
     }, []);
 
-    return (
-        <section ref={heroRef} className="min-h-[100vh] relative overflow-hidden">
-            {/* Golden Cursor Follower - Only on desktop */}
-            {isClient && (
-                <div
-                    className="cursor-follower hidden md:block"
-                    style={{
-                        left: mousePosition.x,
-                        top: mousePosition.y,
-                        opacity: mousePosition.x > 0 ? 1 : 0
-                    }}
-                    aria-hidden="true"
-                />
-            )}
+    // Parallax multipliers
+    const parallaxSlow = scrollY * 0.15;
+    const parallaxMed = scrollY * 0.3;
+    const parallaxFast = scrollY * 0.5;
+    const opacityFade = Math.max(0, 1 - scrollY / 600);
+    const scaleUp = 1 + scrollY * 0.0003;
 
-            {/* Animated Background Gradient Orbs */}
+    return (
+        <section ref={heroRef} className="apple-hero relative overflow-hidden" style={{ minHeight: '100vh' }}>
+
+            {/* === Dark cinematic background === */}
+            <div className="absolute inset-0 bg-[#0a0a08]" />
+
+            {/* Ambient glow orbs - slow drift */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                <div className="hero-orb hero-orb-1" />
-                <div className="hero-orb hero-orb-2" />
-                <div className="hero-orb hero-orb-3" />
+                <div
+                    className="apple-glow-orb"
+                    style={{
+                        width: '800px', height: '800px',
+                        background: 'radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 60%)',
+                        top: '-20%', right: '-10%',
+                        transform: `translate(0, ${parallaxSlow}px)`,
+                    }}
+                />
+                <div
+                    className="apple-glow-orb"
+                    style={{
+                        width: '600px', height: '600px',
+                        background: 'radial-gradient(circle, rgba(31,61,43,0.08) 0%, transparent 60%)',
+                        bottom: '-10%', left: '-10%',
+                        transform: `translate(0, ${-parallaxSlow}px)`,
+                    }}
+                />
             </div>
 
-            {/* Split Screen Container */}
-            <div className="flex flex-col lg:flex-row min-h-[100vh]">
+            {/* === Main Content with parallax layers === */}
+            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center"
+                 style={{ opacity: opacityFade }}>
 
-                {/* Left Side - Content */}
-                <div className="lg:w-1/2 flex flex-col justify-center items-center lg:items-start px-8 lg:px-16 py-16 lg:py-0 text-center lg:text-left order-2 lg:order-1">
-
-                    {/* Logo with entrance animation */}
-                    <div className={`relative w-32 h-32 md:w-40 md:h-40 mb-8 transition-all duration-1000 ease-out hover:scale-105 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                         style={{ transitionDelay: '200ms' }}>
+                {/* Logo - mask reveal */}
+                <div
+                    className={`apple-mask-reveal mb-8 ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        transitionDelay: '300ms',
+                        transform: `translateY(${-parallaxMed}px)`
+                    }}
+                >
+                    <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
                         <Image
                             src="/logo.png"
                             alt="HTK Enterprises"
@@ -71,175 +90,141 @@ export default function HeroSection() {
                             unoptimized
                         />
                     </div>
+                </div>
 
-                    {/* Hook / Tagline with staggered text reveal */}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[var(--color-primary)] font-bold leading-tight mb-6">
-                        <span className={`block hero-text-reveal transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
-                              style={{ transitionDelay: '400ms' }}>
+                {/* Headline - staggered slide+fade */}
+                <div style={{ transform: `translateY(${-parallaxMed * 0.8}px)` }}>
+                    <h1 className="font-serif text-white leading-[1.1]">
+                        <span
+                            className={`block apple-text-reveal text-5xl md:text-7xl lg:text-8xl font-bold ${isLoaded ? 'revealed' : ''}`}
+                            style={{ transitionDelay: '600ms' }}
+                        >
                             Nature&apos;s Purity,
                         </span>
-                        <span className={`block text-[var(--color-gold-deep)] hero-text-reveal transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}
-                              style={{ transitionDelay: '700ms' }}>
+                        <span
+                            className={`block apple-text-reveal text-4xl md:text-6xl lg:text-7xl font-bold mt-2 ${isLoaded ? 'revealed' : ''}`}
+                            style={{
+                                transitionDelay: '900ms',
+                                color: '#D4AF37',
+                                textShadow: '0 0 80px rgba(212,175,55,0.3)'
+                            }}
+                        >
                             Professionally Delivered.
                         </span>
                     </h1>
-
-                    {/* Animated underline accent */}
-                    <div className={`h-[2px] bg-gradient-to-r from-[var(--color-gold-deep)] via-[var(--color-accent)] to-transparent mb-8 transition-all duration-1200 ease-out ${isLoaded ? 'w-48 opacity-100' : 'w-0 opacity-0'}`}
-                         style={{ transitionDelay: '900ms' }} />
-
-                    {/* Supporting Text */}
-                    <p className={`text-lg md:text-xl text-[var(--color-primary)] opacity-70 max-w-md mb-10 font-light leading-relaxed transition-all duration-1000 ease-out ${isLoaded ? 'opacity-70 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                       style={{ transitionDelay: '1000ms' }}>
-                        From pure organic harvests to refined corporate expressions.
-                        3 years of trust, now at your doorstep.
-                    </p>
-
-                    {/* Dual CTAs with entrance animation */}
-                    <div className={`flex flex-col sm:flex-row gap-4 sm:gap-6 transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                         style={{ transitionDelay: '1200ms' }}>
-                        <a
-                            href="/shop"
-                            className="group relative py-4 px-10 bg-[var(--color-primary)] text-white font-medium tracking-wide overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-[var(--color-primary)]/20"
-                        >
-                            <span className="relative z-10">Shop Collection</span>
-                            <span className="absolute inset-0 bg-[var(--color-gold-deep)] transform translate-x-full group-hover:translate-x-0 transition-transform duration-500"></span>
-                        </a>
-                        <a
-                            href="/corporate-gifting"
-                            className="py-4 px-10 border-2 border-[var(--color-primary)] text-[var(--color-primary)] font-medium tracking-wide hover:bg-[var(--color-primary)] hover:text-white transition-all duration-500"
-                        >
-                            Corporate Gifting
-                        </a>
-                    </div>
-
-                    {/* Trust Indicators - animated entrance */}
-                    <div className={`flex items-center gap-8 mt-12 transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-                         style={{ transitionDelay: '1500ms' }}>
-                        <div className="flex items-center gap-2 text-xs text-[var(--color-primary)] opacity-50">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                            </svg>
-                            <span>100% Organic</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-[var(--color-primary)] opacity-50">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M12 2L15 8L21 9L17 14L18 20L12 17L6 20L7 14L3 9L9 8L12 2Z"/>
-                            </svg>
-                            <span>Women-Led</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-[var(--color-primary)] opacity-50">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
-                            <span>Since 2023</span>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Right Side - Enhanced Floating Products Visual */}
-                <div className="lg:w-1/2 relative flex items-center justify-center py-16 lg:py-0 order-1 lg:order-2 bg-gradient-to-br from-[var(--color-bg-warm)] to-[var(--color-bg-cream)]">
+                {/* Golden accent line - width reveal */}
+                <div
+                    className={`apple-line-reveal mt-8 mb-8 ${isLoaded ? 'revealed' : ''}`}
+                    style={{ transitionDelay: '1100ms' }}
+                />
 
-                    {/* Radial glow behind products */}
-                    <div className={`absolute w-[500px] h-[500px] rounded-full transition-all duration-[2000ms] ease-out ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
-                         style={{
-                             background: 'radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.04) 50%, transparent 70%)',
-                             transitionDelay: '500ms'
-                         }}
-                    />
+                {/* Subtitle */}
+                <p
+                    className={`apple-text-reveal text-base md:text-lg text-white/50 max-w-lg mx-auto font-light tracking-wide leading-relaxed ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        transitionDelay: '1200ms',
+                        transform: `translateY(${-parallaxSlow}px)`
+                    }}
+                >
+                    From pure organic harvests to refined corporate expressions.
+                    Three years of trust, now at your doorstep.
+                </p>
 
-                    {/* Golden Particle Effects */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                        {[...Array(12)].map((_, i) => (
-                            <div
-                                key={i}
-                                className={`absolute w-1.5 h-1.5 rounded-full bg-[var(--color-gold-deep)] transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-                                style={{
-                                    left: `${10 + (i * 7)}%`,
-                                    top: `${15 + (i * 6)}%`,
-                                    animation: `shimmer ${3 + (i * 0.5)}s ease-in-out infinite, heroParticleDrift ${8 + i}s ease-in-out infinite`,
-                                    animationDelay: `${i * 0.4}s`,
-                                    transitionDelay: `${1500 + i * 100}ms`
-                                }}
-                            />
-                        ))}
-                    </div>
+                {/* CTA Buttons */}
+                <div
+                    className={`flex flex-col sm:flex-row gap-4 mt-12 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        transitionDelay: '1400ms',
+                        transform: `translateY(${-parallaxSlow * 0.5}px)`
+                    }}
+                >
+                    <a
+                        href="/shop"
+                        className="apple-cta-primary group relative py-4 px-10 overflow-hidden"
+                    >
+                        <span className="relative z-10 text-xs uppercase tracking-[0.25em] font-medium text-[#0a0a08]">
+                            Shop Collection
+                        </span>
+                        <span className="apple-cta-shine" />
+                    </a>
+                    <a
+                        href="/corporate-gifting"
+                        className="apple-cta-secondary py-4 px-10 text-xs uppercase tracking-[0.25em] font-medium"
+                    >
+                        Corporate Gifting
+                    </a>
+                </div>
 
-                    {/* Floating Products with enhanced entrance */}
-                    <div className="relative w-full max-w-lg h-[400px] md:h-[500px]">
+                {/* Trust badges - subtle fade */}
+                <div
+                    className={`flex items-center gap-8 mt-16 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                    style={{ transitionDelay: '1700ms' }}
+                >
+                    {['100% Organic', 'Women-Led', 'Since 2023'].map((label, i) => (
+                        <span key={i} className="text-[10px] uppercase tracking-[0.3em] text-white/25">
+                            {label}
+                        </span>
+                    ))}
+                </div>
+            </div>
 
-                        {/* Main Honey Jar */}
-                        <div
-                            className={`absolute top-[10%] left-[15%] w-40 h-40 md:w-56 md:h-56 drop-shadow-2xl transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-16 scale-90'}`}
-                            style={{
-                                animation: isLoaded ? 'float 6s ease-in-out infinite' : 'none',
-                                transitionDelay: '600ms'
-                            }}
-                        >
-                            <Image
-                                src="/shop-honey.jpg"
-                                alt="Organic Wild Honey"
-                                fill
-                                className="object-cover rounded-lg"
-                                unoptimized
-                            />
-                            <div className="absolute -bottom-2 -right-2 w-full h-full rounded-lg border-2 border-[var(--color-gold-deep)] opacity-30 -z-10"></div>
-                            {/* Shimmer overlay */}
-                            <div className="absolute inset-0 rounded-lg hero-card-shimmer" />
-                        </div>
+            {/* === Floating Product Images with 3D Perspective === */}
+            <div className="absolute inset-0 pointer-events-none z-5 overflow-hidden" aria-hidden="true" style={{ perspective: '1200px' }}>
 
-                        {/* Turmeric Pack */}
-                        <div
-                            className={`absolute top-[35%] right-[10%] w-36 h-36 md:w-48 md:h-48 drop-shadow-2xl transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-16 scale-90'}`}
-                            style={{
-                                animation: isLoaded ? 'floatAlt 5s ease-in-out infinite' : 'none',
-                                animationDelay: '1s',
-                                transitionDelay: '900ms'
-                            }}
-                        >
-                            <Image
-                                src="/shop-turmeric-pkg.jpg"
-                                alt="Premium Turmeric"
-                                fill
-                                className="object-cover rounded-lg"
-                                unoptimized
-                            />
-                            <div className="absolute -bottom-2 -left-2 w-full h-full rounded-lg border-2 border-[var(--color-accent)] opacity-30 -z-10"></div>
-                            <div className="absolute inset-0 rounded-lg hero-card-shimmer" style={{ animationDelay: '2s' }} />
-                        </div>
+                {/* Honey - left drift */}
+                <div
+                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        top: '15%', left: '5%',
+                        width: '180px', height: '180px',
+                        transitionDelay: '1800ms',
+                        transform: `translateY(${parallaxFast * 0.6}px) rotateY(8deg) rotateX(-3deg) scale(${scaleUp})`,
+                        opacity: isLoaded ? 0.15 : 0,
+                    }}
+                >
+                    <Image src="/shop-honey.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
+                </div>
 
-                        {/* Country Sugar */}
-                        <div
-                            className={`absolute bottom-[10%] left-[25%] w-32 h-32 md:w-40 md:h-40 drop-shadow-2xl transition-all duration-1000 ease-out ${isLoaded ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-16 scale-90'}`}
-                            style={{
-                                animation: isLoaded ? 'float 7s ease-in-out infinite' : 'none',
-                                animationDelay: '2s',
-                                transitionDelay: '1200ms'
-                            }}
-                        >
-                            <Image
-                                src="/shop-sugar.jpg"
-                                alt="Country Sugar"
-                                fill
-                                className="object-cover rounded-lg"
-                                unoptimized
-                            />
-                            <div className="absolute -top-2 -right-2 w-full h-full rounded-lg border-2 border-[var(--color-primary)] opacity-20 -z-10"></div>
-                            <div className="absolute inset-0 rounded-lg hero-card-shimmer" style={{ animationDelay: '4s' }} />
-                        </div>
-                    </div>
+                {/* Turmeric - right drift */}
+                <div
+                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        top: '25%', right: '3%',
+                        width: '160px', height: '160px',
+                        transitionDelay: '2000ms',
+                        transform: `translateY(${parallaxFast * 0.4}px) rotateY(-10deg) rotateX(5deg) scale(${scaleUp})`,
+                        opacity: isLoaded ? 0.12 : 0,
+                    }}
+                >
+                    <Image src="/shop-turmeric-pkg.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
+                </div>
 
-                    {/* Decorative golden accent line */}
-                    <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[var(--color-gold-deep)] to-transparent transition-opacity duration-1000 ${isLoaded ? 'opacity-40' : 'opacity-0'}`}
-                         style={{ transitionDelay: '1800ms' }} />
+                {/* Sugar - bottom left */}
+                <div
+                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
+                    style={{
+                        bottom: '12%', left: '10%',
+                        width: '140px', height: '140px',
+                        transitionDelay: '2200ms',
+                        transform: `translateY(${parallaxFast * 0.3}px) rotateY(12deg) rotateX(6deg) scale(${scaleUp})`,
+                        opacity: isLoaded ? 0.10 : 0,
+                    }}
+                >
+                    <Image src="/shop-sugar.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
                 </div>
             </div>
 
             {/* Scroll indicator */}
-            <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-all duration-1000 ${isLoaded ? 'opacity-60 translate-y-0' : 'opacity-0 translate-y-4'}`}
-                 style={{ transitionDelay: '2000ms' }}>
-                <span className="text-[10px] uppercase tracking-[0.3em] text-[var(--color-primary)]">Scroll</span>
-                <div className="w-px h-8 bg-[var(--color-primary)] opacity-40 hero-scroll-line" />
+            <div
+                className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                style={{ transitionDelay: '2400ms' }}
+            >
+                <span className="text-[9px] uppercase tracking-[0.4em] text-white/30">Scroll</span>
+                <div className="w-[1px] h-10 relative overflow-hidden">
+                    <div className="apple-scroll-line" />
+                </div>
             </div>
         </section>
     );
