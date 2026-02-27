@@ -12,6 +12,7 @@ import { products as staticProducts } from '@/lib/products'; // Direct Static Im
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { CommerceProduct } from '@/types/commerce';
+import PersonalizedRecommendations from '@/components/PersonalizedRecommendations';
 
 interface ProductRating {
     avg: number;
@@ -25,6 +26,39 @@ export default function ShopPage() {
     // Initialize with Static Data immediately (Instant Load)
     const [products, setProducts] = useState<any[]>(staticProducts);
     const [productRatings, setProductRatings] = useState<Record<string, ProductRating>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeCategory, setActiveCategory] = useState('All');
+
+    const CATEGORIES = ['All', 'Honey', 'Sugar', 'Turmeric', 'Coffee'];
+
+    const getProductCategory = (productId: string): string => {
+        const id = productId.toLowerCase();
+        if (id.includes('honey')) return 'Honey';
+        if (id.includes('sugar')) return 'Sugar';
+        if (id.includes('manjal') || id.includes('turmeric')) return 'Turmeric';
+        if (id.includes('coffee')) return 'Coffee';
+        return 'Other';
+    };
+
+    const activeProducts = products.filter(p => p.isActive !== false);
+    const filteredProducts = activeProducts.filter(product => {
+        const matchesSearch = searchQuery.trim() === '' ||
+            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (product.description || '').toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = activeCategory === 'All' || getProductCategory(product.id) === activeCategory;
+        return matchesSearch && matchesCategory;
+    });
+
+    const handleShare = (e: React.MouseEvent, product: any) => {
+        e.stopPropagation();
+        const shareUrl = 'https://htkenterprises.net/shop/';
+        const shareText = `Check out ${product.name} from HTK Enterprises! ${shareUrl}`;
+        if (typeof navigator !== 'undefined' && (navigator as any).share) {
+            (navigator as any).share({ title: product.name, text: shareText, url: shareUrl }).catch(() => {});
+        } else {
+            window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,noreferrer');
+        }
+    };
 
     // Background Data Refresh (Stock/Price/Active)
     useEffect(() => {
@@ -123,9 +157,77 @@ export default function ShopPage() {
                 </p>
             </div>
 
+            {/* Search & Category Filter — sticky below header */}
+            <div className="sticky top-0 z-30 bg-[var(--color-background)] border-b border-[var(--color-primary)]/10 shadow-sm">
+                <div className="luxury-container py-4 space-y-3">
+                    {/* Search Bar */}
+                    <div className="relative max-w-xl mx-auto">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-primary)] opacity-40 pointer-events-none">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            placeholder="Search products…"
+                            className="w-full pl-9 pr-9 py-2.5 bg-white border border-[var(--color-primary)]/15 text-[var(--color-primary)] text-sm placeholder:opacity-35 focus:outline-none focus:border-[var(--color-primary)]/40 transition-colors"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-primary)] opacity-40 hover:opacity-80 transition-opacity text-lg leading-none"
+                                aria-label="Clear search"
+                            >&times;</button>
+                        )}
+                    </div>
+
+                    {/* Category Pills */}
+                    <div className="flex items-center gap-2 flex-wrap justify-center">
+                        {CATEGORIES.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`px-4 py-1.5 text-xs font-medium border transition-all duration-200 ${
+                                    activeCategory === cat
+                                        ? 'bg-[var(--color-primary)] text-white border-[var(--color-primary)]'
+                                        : 'bg-transparent text-[var(--color-primary)] border-[var(--color-primary)]/25 hover:border-[var(--color-primary)]/60'
+                                }`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Results count */}
+                    <p className="text-[10px] text-center opacity-40 font-medium tracking-wide">
+                        Showing {filteredProducts.length} of {activeProducts.length} products
+                    </p>
+                </div>
+            </div>
+
             {/* Content Always Visible (No Spinner) */}
-            <div className="luxury-container grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {products.filter(p => p.isActive !== false).map(product => {
+            <div className="luxury-container mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {/* Empty State */}
+                {filteredProducts.length === 0 && (
+                    <div className="col-span-full text-center py-24 space-y-4">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="mx-auto text-[var(--color-accent)] opacity-40">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        <p className="font-serif text-xl opacity-50">No products found</p>
+                        <p className="text-xs opacity-35">Try a different search or category</p>
+                        <button
+                            onClick={() => { setSearchQuery(''); setActiveCategory('All'); }}
+                            className="mt-2 px-6 py-2.5 border border-[var(--color-primary)]/30 text-xs font-medium text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition-all duration-200"
+                        >
+                            Reset Filters
+                        </button>
+                    </div>
+                )}
+                {filteredProducts.map(product => {
                     const existing = items.find(i => i.id === product.id);
                     const qty = existing ? existing.quantity : 0;
 
@@ -158,6 +260,24 @@ export default function ShopPage() {
                                         {product.tag}
                                     </span>
                                 )}
+
+                                {/* Share Button */}
+                                <div className="absolute bottom-4 left-4 z-20">
+                                    <button
+                                        onClick={(e) => handleShare(e, product)}
+                                        title="Share this product"
+                                        aria-label="Share product"
+                                        className="w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-all duration-200 hover:scale-110"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-primary)]">
+                                            <circle cx="18" cy="5" r="3" />
+                                            <circle cx="6" cy="12" r="3" />
+                                            <circle cx="18" cy="19" r="3" />
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                        </svg>
+                                    </button>
+                                </div>
 
                                 {/* Wishlist Heart Toggle */}
                                 <button
@@ -266,8 +386,21 @@ export default function ShopPage() {
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mx-auto mb-4 text-[var(--color-accent)]">
                     <path d="M12 2L15 8L21 9L17 14L18 20L12 17L6 20L7 14L3 9L9 8L12 2Z" />
                 </svg>
-                <p className="font-serif italic text-2xl">"Nature does not hurry, yet everything is accomplished."</p>
+                <p className="font-serif italic text-2xl">&quot;Nature does not hurry, yet everything is accomplished.&quot;</p>
             </div>
+
+            {/* Personalized Recommendations — only when products are found */}
+            {filteredProducts.length > 0 && (
+                <section className="border-t border-[var(--color-primary)]/5 pt-16 pb-8">
+                    <div className="luxury-container">
+                        <div className="mb-8">
+                            <p className="text-[10px] uppercase tracking-[0.5em] text-[var(--color-accent)] mb-2">Curated for You</p>
+                            <h2 className="font-serif text-2xl text-[var(--color-primary)] font-semibold">You Might Also Like</h2>
+                        </div>
+                        <PersonalizedRecommendations />
+                    </div>
+                </section>
+            )}
 
             {/* Contact & Support Section */}
             <section className="mt-32 border-t border-[var(--color-primary)] border-opacity-10 pt-24 text-center space-y-12">

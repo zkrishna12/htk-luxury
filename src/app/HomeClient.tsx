@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
 import HeroSection from '@/components/HeroSection';
 import ProductShowcase from '@/components/ProductShowcase';
+import PersonalizedRecommendations from '@/components/PersonalizedRecommendations';
 
 /* ========================================
    Apple-style Parallax Scroll Hook
@@ -215,6 +216,20 @@ export default function HomeClient() {
             <div ref={showcase.ref} className={`apple-scale-reveal ${showcase.isVisible ? 'revealed' : ''}`}>
                 <ProductShowcase />
             </div>
+
+            {/* ========== PERSONALIZED RECOMMENDATIONS ========== */}
+            <section className="light-section-warm py-20 md:py-28 relative overflow-hidden border-t border-[#1F3D2B]/5">
+                <div className="luxury-container">
+                    <div className="mb-10">
+                        <p className="text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-3">Curated for You</p>
+                        <h2 className="font-serif text-2xl md:text-3xl text-[#1F3D2B] font-bold" id="rec-heading">
+                            {/* Title rendered by component; static fallback */}
+                            Picked Just for You
+                        </h2>
+                    </div>
+                    <PersonalizedRecommendations />
+                </div>
+            </section>
 
             {/* ========== PHILOSOPHY - Elegant center text ========== */}
             <section ref={philosophy.ref} className="light-section-ivory py-28 md:py-40 px-8 relative overflow-hidden">
