@@ -5,12 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
 export default function Navigation() {
     const [isOpen, setIsOpen] = useState(false);
     const { setCartOpen, items } = useCart();
+    const { wishlistCount } = useWishlist();
     const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [hasScrolled, setHasScrolled] = useState(false);
@@ -95,6 +97,31 @@ export default function Navigation() {
                         </Link>
                     )}
                 </div>
+
+                {/* Wishlist Link */}
+                <Link
+                    href="/wishlist"
+                    className="relative text-xs hover:opacity-50 font-medium transition-opacity duration-300 flex items-center gap-1"
+                    title="Wishlist"
+                    aria-label="Wishlist"
+                >
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill={wishlistCount > 0 ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        className={wishlistCount > 0 ? 'text-[var(--color-accent)]' : 'text-[var(--color-primary)]'}
+                    >
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 min-w-[16px] h-4 flex items-center justify-center bg-[var(--color-accent)] text-white text-[9px] font-bold rounded-full px-0.5">
+                            {wishlistCount}
+                        </span>
+                    )}
+                </Link>
 
                 {/* Cart Trigger */}
                 <button onClick={() => setCartOpen(true)} className="text-xs hover:opacity-50 font-medium transition-opacity duration-300">

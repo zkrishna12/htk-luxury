@@ -41,11 +41,13 @@ export const metadata: Metadata = {
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
+import { WishlistProvider } from "@/context/WishlistContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import CartDrawer from "@/components/CartDrawer";
 import LuxuryBackground from "@/components/LuxuryBackground";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import ChatBot from "@/components/ChatBot";
 import StructuredData from "@/components/StructuredData";
 
 import NewsletterPopup from '@/components/NewsletterPopup';
@@ -70,15 +72,18 @@ export default function RootLayout({
         <LanguageProvider>
           <CurrencyProvider>
             <CartProvider>
-              <LuxuryBackground />
-              <Navigation />
-              <CartDrawer />
-              <main id="main-content">
-                {children}
-              </main>
-              <NewsletterPopup />
-              <WhatsAppButton />
-              <Footer />
+              <WishlistProvider>
+                <LuxuryBackground />
+                <Navigation />
+                <CartDrawer />
+                <main id="main-content">
+                  {children}
+                </main>
+                <NewsletterPopup />
+                <ChatBot />
+                <WhatsAppButton />
+                <Footer />
+              </WishlistProvider>
             </CartProvider>
           </CurrencyProvider>
         </LanguageProvider>

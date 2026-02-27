@@ -7,16 +7,24 @@ import CartDrawer from '@/components/CartDrawer';
 import ProductDetailsModal from '@/components/ProductDetailsModal';
 import LuxuryFrame from '@/components/LuxuryFrame';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { products as staticProducts } from '@/lib/products'; // Direct Static Import
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { CommerceProduct } from '@/types/commerce';
+
+interface ProductRating {
+    avg: number;
+    count: number;
+}
 
 export default function ShopPage() {
     const { addToCart, items, removeFromCart } = useCart();
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     // Initialize with Static Data immediately (Instant Load)
     const [products, setProducts] = useState<any[]>(staticProducts);
+    const [productRatings, setProductRatings] = useState<Record<string, ProductRating>>({});
 
     // Background Data Refresh (Stock/Price/Active)
     useEffect(() => {
@@ -54,6 +62,37 @@ export default function ShopPage() {
             }
         };
         refreshProducts();
+    }, []);
+
+    // Fetch reviews and compute per-product ratings
+    useEffect(() => {
+        const fetchRatings = async () => {
+            try {
+                const q = query(collection(db, 'reviews'), orderBy('createdAt', 'desc'));
+                const snap = await getDocs(q);
+                const ratingsMap: Record<string, { sum: number; count: number }> = {};
+                snap.forEach((doc) => {
+                    const d = doc.data();
+                    const pid: string | undefined = d.productId;
+                    if (pid) {
+                        if (!ratingsMap[pid]) ratingsMap[pid] = { sum: 0, count: 0 };
+                        ratingsMap[pid].sum += Number(d.rating) || 0;
+                        ratingsMap[pid].count += 1;
+                    }
+                });
+                const computed: Record<string, ProductRating> = {};
+                for (const pid in ratingsMap) {
+                    computed[pid] = {
+                        avg: ratingsMap[pid].sum / ratingsMap[pid].count,
+                        count: ratingsMap[pid].count,
+                    };
+                }
+                setProductRatings(computed);
+            } catch (err) {
+                console.error('Failed to fetch product ratings:', err);
+            }
+        };
+        fetchRatings();
     }, []);
 
     const handleAddToCart = (product: any) => {
@@ -120,6 +159,31 @@ export default function ShopPage() {
                                     </span>
                                 )}
 
+                                {/* Wishlist Heart Toggle */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        isInWishlist(product.id)
+                                            ? removeFromWishlist(product.id)
+                                            : addToWishlist(product);
+                                    }}
+                                    title={isInWishlist(product.id) ? 'Remove from Wishlist' : 'Save to Wishlist'}
+                                    aria-label={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                                    className="absolute bottom-4 right-4 z-20 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-all duration-200 hover:scale-110"
+                                >
+                                    <svg
+                                        width="18"
+                                        height="18"
+                                        viewBox="0 0 24 24"
+                                        fill={isInWishlist(product.id) ? 'currentColor' : 'none'}
+                                        stroke="currentColor"
+                                        strokeWidth="1.5"
+                                        className={isInWishlist(product.id) ? 'text-[var(--color-accent)]' : 'text-[var(--color-primary)]'}
+                                    >
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                </button>
+
                                 {/* Hover Overlay - View Details */}
                                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                     <span className="bg-white/90 text-[var(--color-primary)] px-4 py-2 text-xs font-medium backdrop-blur-sm">View Details</span>
@@ -138,10 +202,32 @@ export default function ShopPage() {
                                 <div className="text-xs opacity-50">{product.weight}</div>
 
                                 {/* Ratings */}
-                                <div className="flex justify-center gap-1 text-[var(--color-accent)] text-xs">
-                                    {'★★★★★'.split('').map((c, i) => <span key={i}>★</span>)}
-                                    <span className="text-[var(--color-primary)] opacity-40 ml-2">(4.9)</span>
-                                </div>
+                                {(() => {
+                                    const pr = productRatings[product.id];
+                                    if (pr) {
+                                        return (
+                                            <div className="flex justify-center items-center gap-1">
+                                                {[1,2,3,4,5].map((s) => (
+                                                    <svg key={s} className="w-3.5 h-3.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path
+                                                            d="M12 2L14.39 8.26L21 9.27L16.5 14.14L17.77 21L12 17.77L6.23 21L7.5 14.14L3 9.27L9.61 8.26L12 2Z"
+                                                            fill={s <= Math.round(pr.avg) ? '#D4AF37' : 'none'}
+                                                            stroke={s <= Math.round(pr.avg) ? '#D4AF37' : '#1F3D2B'}
+                                                            strokeOpacity={s <= Math.round(pr.avg) ? '1' : '0.2'}
+                                                            strokeWidth="1.5"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                        />
+                                                    </svg>
+                                                ))}
+                                                <span className="text-[10px] opacity-40 ml-1">({pr.count})</span>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <p className="text-[10px] opacity-35 text-center">No reviews yet</p>
+                                    );
+                                })()}
 
                                 <div className="flex items-center justify-center gap-4 text-sm font-medium py-2">
                                     <span>₹{product.price.toFixed(2)}</span>

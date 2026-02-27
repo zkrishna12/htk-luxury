@@ -43,6 +43,14 @@ export default function CartDrawer() {
         pincode: ''
     });
 
+    // Saved address state
+    const [savedAddress, setSavedAddress] = React.useState<any>(null);
+    const [hasSavedAddress, setHasSavedAddress] = React.useState(false);
+    const [loadingAddress, setLoadingAddress] = React.useState(false);
+    const [saveAddressChecked, setSaveAddressChecked] = React.useState(true);
+    // Controls whether the saved address banner is shown vs. editing a new address
+    const [usingSavedAddress, setUsingSavedAddress] = React.useState(false);
+
     // Reset step when cart opens
     React.useEffect(() => {
         if (cartOpen) {
@@ -53,11 +61,48 @@ export default function CartDrawer() {
 
     if (!cartOpen) return null;
 
-    const handleProceed = () => {
+    const handleProceed = async () => {
         if (!auth.currentUser) {
             setCartOpen(false);
             router.push('/login');
             return;
+        }
+        // Fetch saved address from Firestore before showing address step
+        try {
+            setLoadingAddress(true);
+            const uid = auth.currentUser.uid;
+            const addrRef = doc(db, 'users', uid, 'addresses', 'default');
+            const addrSnap = await getDoc(addrRef);
+            if (addrSnap.exists()) {
+                const saved = addrSnap.data();
+                setSavedAddress(saved);
+                setHasSavedAddress(true);
+                setUsingSavedAddress(true);
+                // Pre-fill address fields with saved data
+                setAddress({
+                    name: saved.name || '',
+                    phone: saved.phone || '',
+                    houseNumber: saved.houseNumber || '',
+                    area: saved.area || '',
+                    street: saved.street || '',
+                    landmark: saved.landmark || '',
+                    city: saved.city || '',
+                    state: saved.state || 'Tamil Nadu',
+                    pincode: saved.pincode || ''
+                });
+            } else {
+                setSavedAddress(null);
+                setHasSavedAddress(false);
+                setUsingSavedAddress(false);
+                // Reset address form for a fresh entry
+                setAddress({ name: '', phone: '', houseNumber: '', area: '', street: '', landmark: '', city: '', state: 'Tamil Nadu', pincode: '' });
+            }
+        } catch (err) {
+            console.error('Failed to fetch saved address:', err);
+            setHasSavedAddress(false);
+            setUsingSavedAddress(false);
+        } finally {
+            setLoadingAddress(false);
         }
         setStep('address');
     };
@@ -193,6 +238,17 @@ export default function CartDrawer() {
                     setShowSuccess(true);
                     clearCart();
 
+                    // Save address to Firestore if user opted in
+                    if (saveAddressChecked && auth.currentUser) {
+                        try {
+                            const uid = auth.currentUser.uid;
+                            await setDoc(doc(db, 'users', uid, 'addresses', 'default'), address);
+                        } catch (addrSaveErr) {
+                            console.error('Failed to save address:', addrSaveErr);
+                            // Non-blocking — order already succeeded
+                        }
+                    }
+
                 } catch (error) {
                     console.error("Critical Payment Handler Error:", error);
                     alert("Payment successful, but an error occurred processing the receipt. Please contact support with Payment ID: " + response.razorpay_payment_id);
@@ -203,6 +259,124 @@ export default function CartDrawer() {
             prefill: {
                 name: address.name,
                 contact: address.phone,
+                email: auth.currentUser?.email || "guest@htk.com"
+            },
+            theme: { color: "var(--color-primary)" }
+        };
+
+        try {
+            const rzp1 = new window.Razorpay(options);
+            rzp1.on('payment.failed', function (response: any) {
+                console.error("Payment Failed:", response.error);
+                alert("Payment Failed: " + response.error.description);
+                setLoading(false);
+            });
+            rzp1.open();
+        } catch (err) {
+            console.error("Razorpay Initialization Failed", err);
+            alert("Could not load payment gateway. Please check connection.");
+            setLoading(false);
+        }
+    };
+
+    // Quick Pay: skip form, use saved address directly
+    const handleQuickPay = async () => {
+        if (!savedAddress) return;
+        // Ensure address state is set from savedAddress
+        const quickAddress = { ...savedAddress };
+        setAddress(quickAddress);
+
+        const isStockValid = await validateStock();
+        if (!isStockValid) return;
+
+        if (!window.Razorpay) {
+            alert('Payment gateway failed.');
+            return;
+        }
+
+        const options = {
+            key: "rzp_live_RyH14ZV1BzEA8D",
+            amount: total * 100,
+            currency: "INR",
+            name: "HTK Enterprises",
+            description: "Organic Goods",
+            image: "/logo.png",
+            handler: async function (response: any) {
+                setLoading(true);
+                console.log("Quick Pay Success:", response);
+                try {
+                    const deliveryDays = quickAddress.state?.toLowerCase().includes('tamil') ? '2-3 Business Days' : '4-5 Business Days';
+
+                    const orderData = {
+                        userId: auth.currentUser?.uid || 'guest',
+                        userPhone: auth.currentUser?.phoneNumber || quickAddress.phone,
+                        items: items,
+                        total: total,
+                        address: quickAddress,
+                        paymentId: response.razorpay_payment_id,
+                        status: 'paid',
+                        deliveryEstimate: deliveryDays,
+                        createdAt: serverTimestamp()
+                    };
+
+                    await setDoc(doc(db, 'orders', response.razorpay_payment_id), orderData);
+
+                    try {
+                        for (const item of items) {
+                            const productRef = doc(db, 'products', item.id);
+                            await updateDoc(productRef, {
+                                stock: increment(-item.quantity)
+                            });
+                        }
+                    } catch (inventoryError) {
+                        console.error("Inventory Decrement Failed:", inventoryError);
+                    }
+
+                    fetch('/api/email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to: auth.currentUser?.email || quickAddress.name + "@example.com",
+                            subject: `HTK Order Confirmation: ${response.razorpay_payment_id}`,
+                            html: `<h1>Order Received</h1><p>Thank you, ${quickAddress.name}. Your order ID is ${response.razorpay_payment_id}.</p>`
+                        })
+                    }).catch(err => console.error("Email Trigger Failed", err));
+
+                    sendAdminNotification({
+                        type: 'order',
+                        data: {
+                            paymentId: response.razorpay_payment_id,
+                            customerName: quickAddress.name,
+                            phone: quickAddress.phone,
+                            total: total,
+                            itemCount: items.length,
+                            address: `${quickAddress.houseNumber}, ${quickAddress.area}, ${quickAddress.city}, ${quickAddress.state} - ${quickAddress.pincode}`
+                        }
+                    });
+
+                    sendWhatsAppOrderNotification({
+                        paymentId: response.razorpay_payment_id,
+                        customerName: quickAddress.name,
+                        phone: quickAddress.phone,
+                        total: total,
+                        itemCount: items.length,
+                        items: items.map((i: any) => `${i.name} x${i.quantity}`).join(', '),
+                        address: `${quickAddress.houseNumber}, ${quickAddress.area}, ${quickAddress.city}, ${quickAddress.state} - ${quickAddress.pincode}`
+                    });
+
+                    setLastOrder({ ...orderData, id: response.razorpay_payment_id });
+                    setShowSuccess(true);
+                    clearCart();
+                } catch (error) {
+                    console.error("Quick Pay Handler Error:", error);
+                    alert("Payment successful, but an error occurred. Please contact support with Payment ID: " + response.razorpay_payment_id);
+                } finally {
+                    setLoading(false);
+                }
+            },
+            prefill: {
+                name: quickAddress.name,
+                contact: quickAddress.phone,
                 email: auth.currentUser?.email || "guest@htk.com"
             },
             theme: { color: "var(--color-primary)" }
@@ -383,8 +557,8 @@ export default function CartDrawer() {
                                             <span>₹{total}.00</span>
                                         </div>
 
-                                        <button onClick={handleProceed} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-4 font-medium">
-                                            {auth.currentUser ? 'Proceed to Checkout' : 'Login to Checkout'}
+                                        <button onClick={handleProceed} disabled={loadingAddress} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-4 font-medium disabled:opacity-60">
+                                            {loadingAddress ? 'Loading...' : auth.currentUser ? 'Proceed to Checkout' : 'Login to Checkout'}
                                         </button>
                                     </div>
                                 )}
@@ -421,6 +595,52 @@ export default function CartDrawer() {
                             </>
                         ) : (
                             <form onSubmit={handleFinalPayment} className="space-y-6 animate-fade-in">
+
+                                {/* Saved Address Banner — shown when user has a saved address */}
+                                {hasSavedAddress && savedAddress && (
+                                    <div className="border border-[#D4AF37] bg-[#D4AF37]/8 p-4 space-y-3 rounded-sm">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="space-y-1 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-medium tracking-widest text-[#D4AF37] uppercase">Saved Address</span>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] inline-block"></span>
+                                                </div>
+                                                <p className="text-sm font-serif text-[var(--color-primary)] font-semibold">{savedAddress.name}</p>
+                                                <p className="text-xs opacity-70 leading-relaxed">
+                                                    {savedAddress.houseNumber}, {savedAddress.area}{savedAddress.street ? `, ${savedAddress.street}` : ''}{savedAddress.landmark ? ` (${savedAddress.landmark})` : ''}<br />
+                                                    {savedAddress.city}, {savedAddress.state} — {savedAddress.pincode}
+                                                </p>
+                                                <p className="text-xs opacity-60">{savedAddress.phone}</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setUsingSavedAddress(false);
+                                                    setAddress({ name: '', phone: '', houseNumber: '', area: '', street: '', landmark: '', city: '', state: 'Tamil Nadu', pincode: '' });
+                                                }}
+                                                className="text-[10px] border border-[var(--color-primary)]/30 px-3 py-1.5 hover:bg-[var(--color-primary)] hover:text-white transition-colors font-medium text-[var(--color-primary)] flex-shrink-0"
+                                            >
+                                                Change
+                                            </button>
+                                        </div>
+
+                                        {/* Quick Pay Button */}
+                                        <button
+                                            type="button"
+                                            disabled={loading}
+                                            onClick={handleQuickPay}
+                                            className="w-full py-3.5 bg-[#D4AF37] text-white text-xs font-medium hover:bg-[#BFA76A] transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                            {loading ? 'Processing...' : `Quick Pay  ₹${total}.00`}
+                                        </button>
+
+                                        <p className="text-[10px] opacity-50 text-center">Or fill the form below to use a different address</p>
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     <input required placeholder="Full Name" className="w-full p-4 bg-white border border-[var(--color-primary)]/20 focus:outline-none"
                                         value={address.name} onChange={e => setAddress({ ...address, name: e.target.value })} />
@@ -464,9 +684,22 @@ export default function CartDrawer() {
                                             <option value="Other">Other</option>
                                         </select>
                                     </div>
+
+                                    {/* Save address checkbox */}
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            checked={saveAddressChecked}
+                                            onChange={e => setSaveAddressChecked(e.target.checked)}
+                                            className="w-4 h-4 accent-[#1F3D2B] cursor-pointer"
+                                        />
+                                        <span className="text-xs opacity-70 group-hover:opacity-100 transition-opacity">
+                                            Save this address for faster checkout
+                                        </span>
+                                    </label>
                                 </div>
 
-                                <button type="submit" disabled={loading} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-8 font-medium">
+                                <button type="submit" disabled={loading} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-8 font-medium disabled:opacity-60">
                                     {loading ? 'Processing...' : `Pay ₹${total}.00`}
                                 </button>
                                 <button type="button" onClick={() => setStep('cart')} className="w-full text-xs underline opacity-50 hover:opacity-100">
