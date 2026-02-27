@@ -108,8 +108,8 @@ export default function HomeClient() {
             {/* ========== HERO ========== */}
             <HeroSection />
 
-            {/* ========== DARK TRANSITION - Scrolling Trust Marquee ========== */}
-            <div ref={marquee.ref} className="apple-section-dark py-6 overflow-hidden relative">
+            {/* ========== SCROLLING TRUST MARQUEE - Forest green band ========== */}
+            <div ref={marquee.ref} className="light-section-accent py-6 overflow-hidden relative">
                 <div className={`marquee-track flex items-center gap-14 whitespace-nowrap apple-fade-up ${marquee.isVisible ? 'revealed' : ''}`}
                      style={{ width: 'max-content' }}>
                     {[...Array(3)].map((_, setIdx) => (
@@ -123,7 +123,7 @@ export default function HomeClient() {
                                 <span key={`${setIdx}-${i}`}
                                       className={`text-[10px] uppercase tracking-[0.35em] ${text === '✦'
                                           ? 'text-[#D4AF37] text-[8px]'
-                                          : 'text-white/40'}`}>
+                                          : 'text-white/70'}`}>
                                     {text}
                                 </span>
                             ))}
@@ -132,24 +132,24 @@ export default function HomeClient() {
                 </div>
             </div>
 
-            {/* ========== FEATURE HIGHLIGHTS - Dark section with Apple grid ========== */}
-            <section className="apple-section-dark py-28 md:py-36 relative overflow-hidden">
-                {/* Subtle grid pattern */}
+            {/* ========== FEATURE HIGHLIGHTS - Warm light section ========== */}
+            <section className="light-section-warm py-28 md:py-36 relative overflow-hidden">
+                {/* Subtle dot pattern */}
                 <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                    backgroundSize: '80px 80px'
+                    backgroundImage: 'radial-gradient(circle at 2px 2px, #1F3D2B 1px, transparent 0)',
+                    backgroundSize: '48px 48px'
                 }} />
 
                 <div ref={features.ref} className="luxury-container relative z-10">
-                    {/* Section header - slide up */}
+                    {/* Section header */}
                     <div className={`text-center mb-20 apple-text-reveal ${features.isVisible ? 'revealed' : ''}`}>
                         <p className="text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-5">Why Choose Us</p>
-                        <h2 className="text-3xl md:text-5xl font-serif text-white font-bold leading-tight">
+                        <h2 className="text-3xl md:text-5xl font-serif text-[#1F3D2B] font-bold leading-tight">
                             Rooted in Tradition,<br/>Refined for You
                         </h2>
                     </div>
 
-                    {/* Feature cards - staggered reveal with 3D tilt on hover */}
+                    {/* Feature cards - staggered reveal */}
                     <div className="grid md:grid-cols-3 gap-6 md:gap-10">
                         {[
                             {
@@ -183,43 +183,43 @@ export default function HomeClient() {
                         ].map((feature, i) => (
                             <div
                                 key={i}
-                                className={`apple-feature-card apple-stagger-reveal ${features.isVisible ? 'revealed' : ''}`}
+                                className={`light-feature-card apple-stagger-reveal ${features.isVisible ? 'revealed' : ''}`}
                                 style={{ transitionDelay: `${300 + i * 200}ms` }}
                             >
-                                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/5 text-[#D4AF37] mb-6 border border-white/10">
+                                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-[#1F3D2B]/5 text-[#D4AF37] mb-6 border border-[#1F3D2B]/10">
                                     {feature.icon}
                                 </div>
-                                <h3 className="font-serif text-xl text-white mb-3 font-semibold">{feature.title}</h3>
-                                <p className="text-sm text-white/40 leading-relaxed">{feature.description}</p>
+                                <h3 className="font-serif text-xl text-[#1F3D2B] mb-3 font-semibold">{feature.title}</h3>
+                                <p className="text-sm text-[#1F3D2B]/50 leading-relaxed">{feature.description}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ========== NAVIGATION PATHS - Minimal links ========== */}
-            <nav className="apple-section-dark py-20 flex flex-col md:flex-row justify-center gap-12 md:gap-24 text-lg font-sans relative z-10 border-t border-white/5 border-b border-b-white/5">
+            {/* ========== NAVIGATION PATHS ========== */}
+            <nav className="light-section-warm py-20 flex flex-col md:flex-row justify-center gap-12 md:gap-24 text-lg font-sans relative z-10 border-t border-[#1F3D2B]/5 border-b border-b-[#1F3D2B]/5">
                 {[
                     { href: '/organic', label: 'Organic Goods' },
                     { href: '/corporate-gifting', label: 'Corporate Gifting' },
                     { href: '/shop', label: 'Shop All' },
                 ].map((link, i) => (
                     <a key={i} href={link.href} className="group relative py-2 text-center">
-                        <span className="text-white/60 group-hover:text-white transition-colors duration-500">{link.label}</span>
+                        <span className="text-[#1F3D2B]/50 group-hover:text-[#1F3D2B] transition-colors duration-500">{link.label}</span>
                         <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-[#D4AF37] transition-all duration-700 group-hover:w-full" />
                     </a>
                 ))}
             </nav>
 
-            {/* ========== PRODUCT SHOWCASE - Full-bleed dark carousel ========== */}
+            {/* ========== PRODUCT SHOWCASE ========== */}
             <div ref={showcase.ref} className={`apple-scale-reveal ${showcase.isVisible ? 'revealed' : ''}`}>
                 <ProductShowcase />
             </div>
 
-            {/* ========== PHILOSOPHY - Cinematic text on dark ========== */}
-            <section ref={philosophy.ref} className="apple-section-dark py-28 md:py-40 px-8 relative overflow-hidden">
-                {/* Ambient background glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04]"
+            {/* ========== PHILOSOPHY - Elegant center text ========== */}
+            <section ref={philosophy.ref} className="light-section-ivory py-28 md:py-40 px-8 relative overflow-hidden">
+                {/* Soft gold radial glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.06]"
                      style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 60%)' }} />
 
                 <div className="max-w-2xl mx-auto text-center relative z-10"
@@ -228,11 +228,11 @@ export default function HomeClient() {
                        style={{ transitionDelay: '0ms' }}>
                         Our Philosophy
                     </p>
-                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-white/80 leading-relaxed mb-6 ${philosophy.isVisible ? 'revealed' : ''}`}
+                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-[#1F3D2B]/80 leading-relaxed mb-6 ${philosophy.isVisible ? 'revealed' : ''}`}
                        style={{ transitionDelay: '200ms' }}>
                         We believe food should be pure, honest, and traceable.
                     </p>
-                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-white/80 leading-relaxed mb-10 ${philosophy.isVisible ? 'revealed' : ''}`}
+                    <p className={`apple-text-reveal font-serif text-2xl md:text-4xl text-[#1F3D2B]/80 leading-relaxed mb-10 ${philosophy.isVisible ? 'revealed' : ''}`}
                        style={{ transitionDelay: '400ms' }}>
                         We believe gifting should carry meaning, not noise.
                     </p>
@@ -245,10 +245,10 @@ export default function HomeClient() {
                 </div>
             </section>
 
-            {/* ========== STATS / IMPACT - Number reveal with parallax ========== */}
-            <section ref={stats.ref} className="apple-section-dark py-24 relative overflow-hidden border-t border-white/5">
-                {/* Dot pattern */}
-                <div className="absolute inset-0 opacity-[0.02]" style={{
+            {/* ========== STATS / IMPACT - Forest green band ========== */}
+            <section ref={stats.ref} className="light-section-accent py-24 relative overflow-hidden">
+                {/* Subtle pattern overlay */}
+                <div className="absolute inset-0 opacity-[0.04]" style={{
                     backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.5) 1px, transparent 0)',
                     backgroundSize: '48px 48px'
                 }} />
@@ -269,19 +269,19 @@ export default function HomeClient() {
                                 <div className="text-4xl md:text-6xl font-serif text-[#D4AF37] mb-3 font-bold">
                                     <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                                 </div>
-                                <p className="text-[10px] uppercase tracking-[0.3em] text-white/30">{stat.label}</p>
+                                <p className="text-[10px] uppercase tracking-[0.3em] text-white/50">{stat.label}</p>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* ========== THE JOURNEY - Horizontal scroll-reveal steps ========== */}
-            <section ref={journey.ref} className="apple-section-dark py-28 md:py-36 relative overflow-hidden border-t border-white/5">
+            {/* ========== THE JOURNEY ========== */}
+            <section ref={journey.ref} className="light-section-warm py-28 md:py-36 relative overflow-hidden">
                 <div className="luxury-container">
                     <div className={`text-center mb-20 apple-text-reveal ${journey.isVisible ? 'revealed' : ''}`}>
                         <p className="text-[10px] uppercase tracking-[0.5em] text-[#D4AF37] mb-5">The Journey</p>
-                        <h2 className="text-3xl md:text-5xl font-serif text-white font-bold">From Farm to You</h2>
+                        <h2 className="text-3xl md:text-5xl font-serif text-[#1F3D2B] font-bold">From Farm to You</h2>
                     </div>
 
                     <div className="grid md:grid-cols-4 gap-8">
@@ -297,8 +297,8 @@ export default function HomeClient() {
                                 style={{ transitionDelay: `${300 + i * 200}ms` }}
                             >
                                 <div className="text-5xl md:text-6xl font-serif text-[#D4AF37]/20 font-bold mb-4">{item.step}</div>
-                                <h3 className="font-serif text-lg text-white mb-2 font-semibold">{item.title}</h3>
-                                <p className="text-sm text-white/35 leading-relaxed">{item.desc}</p>
+                                <h3 className="font-serif text-lg text-[#1F3D2B] mb-2 font-semibold">{item.title}</h3>
+                                <p className="text-sm text-[#1F3D2B]/40 leading-relaxed">{item.desc}</p>
                                 {i < 3 && (
                                     <div className="hidden md:block mt-6 h-[1px] bg-gradient-to-r from-[#D4AF37]/20 to-transparent" />
                                 )}
@@ -308,14 +308,14 @@ export default function HomeClient() {
                 </div>
             </section>
 
-            {/* ========== TRUST BADGE - Final light section transition ========== */}
-            <section ref={trustBadge.ref} className="py-20 bg-[var(--color-bg-warm)] relative overflow-hidden">
+            {/* ========== TRUST BADGE - Cream section ========== */}
+            <section ref={trustBadge.ref} className="py-20 bg-[#F8F6F2] relative overflow-hidden border-t border-[#1F3D2B]/5">
                 <div className="max-w-4xl mx-auto text-center px-8">
-                    <p className={`apple-text-reveal text-[10px] uppercase tracking-[0.4em] text-[var(--color-accent)] mb-5 ${trustBadge.isVisible ? 'revealed' : ''}`}
+                    <p className={`apple-text-reveal text-[10px] uppercase tracking-[0.4em] text-[#D4AF37] mb-5 ${trustBadge.isVisible ? 'revealed' : ''}`}
                        style={{ transitionDelay: '0ms' }}>
                         Trusted Since 2023
                     </p>
-                    <p className={`apple-text-reveal font-serif text-xl md:text-2xl text-[var(--color-primary)] opacity-70 leading-relaxed ${trustBadge.isVisible ? 'revealed' : ''}`}
+                    <p className={`apple-text-reveal font-serif text-xl md:text-2xl text-[#1F3D2B]/70 leading-relaxed ${trustBadge.isVisible ? 'revealed' : ''}`}
                        style={{ transitionDelay: '200ms' }}>
                         3 years of delivering nature&apos;s finest to discerning homes and businesses across India.
                     </p>

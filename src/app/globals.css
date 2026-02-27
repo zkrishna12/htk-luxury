@@ -65,10 +65,32 @@ button, .btn, a {
 }
 
 /* ========================================
+   LIGHT THEME SECTIONS
+   ======================================== */
+
+/* Warm cream section */
+.light-section-warm {
+  background: #F8F6F2;
+  position: relative;
+}
+
+/* Slightly different ivory */
+.light-section-ivory {
+  background: #F0EDE6;
+  position: relative;
+}
+
+/* Forest green accent band */
+.light-section-accent {
+  background: #1F3D2B;
+  position: relative;
+}
+
+/* ========================================
    APPLE-STYLE CORE ANIMATIONS
    ======================================== */
 
-/* Dark cinematic section base */
+/* Legacy dark section base - kept for compat */
 .apple-section-dark {
   background: #0a0a08;
   position: relative;
@@ -185,8 +207,34 @@ button, .btn, a {
 }
 
 /* ========================================
-   CTA BUTTONS - Apple-style
+   CTA BUTTONS - Light theme
    ======================================== */
+.light-cta-primary {
+  background: #1F3D2B;
+  color: white;
+  transition: all 0.5s var(--apple-ease-smooth);
+  position: relative;
+}
+
+.light-cta-primary:hover {
+  background: #2a5238;
+  box-shadow: 0 8px 40px rgba(31, 61, 43, 0.25);
+  transform: translateY(-2px);
+}
+
+.light-cta-secondary {
+  color: #1F3D2B;
+  border: 1px solid rgba(31, 61, 43, 0.25);
+  transition: all 0.5s var(--apple-ease-smooth);
+}
+
+.light-cta-secondary:hover {
+  border-color: #1F3D2B;
+  background: rgba(31, 61, 43, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Legacy dark CTA - kept for compat */
 .apple-cta-primary {
   background: #D4AF37;
   color: #0a0a08;
@@ -228,8 +276,41 @@ button, .btn, a {
 }
 
 /* ========================================
-   FEATURE CARDS - Dark theme with border glow
+   FEATURE CARDS - Light theme with warm border
    ======================================== */
+.light-feature-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(31, 61, 43, 0.08);
+  padding: 2.5rem;
+  text-align: center;
+  transition: all 0.6s var(--apple-ease-smooth);
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.light-feature-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, transparent 40%, rgba(212, 175, 55, 0.12) 50%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.light-feature-card:hover {
+  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(31, 61, 43, 0.08);
+}
+
+.light-feature-card:hover::before {
+  opacity: 1;
+}
+
+/* Legacy dark feature card - kept for compat */
 .apple-feature-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -261,7 +342,7 @@ button, .btn, a {
 }
 
 /* ========================================
-   SCROLL INDICATOR LINE
+   SCROLL INDICATOR LINES
    ======================================== */
 .apple-scroll-line {
   position: absolute;
@@ -271,13 +352,21 @@ button, .btn, a {
   animation: scrollLineMove 2s var(--apple-ease-smooth) infinite;
 }
 
+.apple-scroll-line-light {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(31, 61, 43, 0.4), transparent);
+  animation: scrollLineMove 2s var(--apple-ease-smooth) infinite;
+}
+
 @keyframes scrollLineMove {
   0% { transform: translateY(-100%); }
   100% { transform: translateY(100%); }
 }
 
 /* ========================================
-   LEGACY ANIMATIONS (kept for compatibility)
+   LEGACY ANIMATIONS
    ======================================== */
 
 @keyframes fadeIn {
@@ -477,7 +566,7 @@ button, .btn, a {
 }
 
 /* ========================================
-   HERO SECTION ANIMATIONS (Product Showcase)
+   HERO SECTION ANIMATIONS
    ======================================== */
 .hero-orb {
   position: absolute;
@@ -672,7 +761,8 @@ button, .btn, a {
 
   .product-card-hover:hover,
   .feature-card:hover,
-  .apple-feature-card:hover {
+  .apple-feature-card:hover,
+  .light-feature-card:hover {
     transform: none;
   }
 
@@ -830,7 +920,18 @@ button, .btn, a {
   75% { transform: rotateY(-15deg) rotateX(-3deg); }
 }
 
-/* Glow under product */
+/* Glow under product - light theme version */
+.hero-product-glow-light {
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  filter: blur(25px);
+  opacity: 0.35;
+  animation: heroGlowPulse 3s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Glow under product - dark theme version */
 .hero-product-glow {
   position: absolute;
   inset: -15px;
@@ -846,7 +947,18 @@ button, .btn, a {
   50% { opacity: 0.6; transform: scale(1.15); }
 }
 
-/* Shimmer across product image */
+/* Shimmer - light theme */
+.hero-product-shimmer-light {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.6) 45%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.6) 55%, transparent 70%);
+  background-size: 250% 100%;
+  animation: heroShimmerSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Shimmer - dark theme */
 .hero-product-shimmer {
   position: absolute;
   inset: 0;
@@ -862,7 +974,16 @@ button, .btn, a {
   100% { background-position: -250% 0; }
 }
 
-/* Product name label */
+/* Product label - light theme */
+.hero-product-label-light {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: rgba(31, 61, 43, 0.5);
+  font-weight: 500;
+}
+
+/* Product label - dark theme */
 .hero-product-label {
   font-size: 9px;
   text-transform: uppercase;
