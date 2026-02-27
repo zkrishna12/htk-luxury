@@ -13,11 +13,7 @@ export default function Navigation() {
     const { setCartOpen, items } = useCart();
     const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
-
-    // Scroll direction state for hide-on-scroll
-    const [isHidden, setIsHidden] = useState(false);
     const [hasScrolled, setHasScrolled] = useState(false);
-    const lastScrollY = useRef(0);
 
     React.useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -33,63 +29,27 @@ export default function Navigation() {
         setIsOpen(false);
     }, [pathname]);
 
-    // Scroll direction tracking for hide-on-scroll behavior
+    // Track scroll for background styling
     useEffect(() => {
-        // Respect reduced motion preference
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (prefersReducedMotion) return;
-
         const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-
-            // Add shadow when scrolled past threshold
-            setHasScrolled(currentScrollY > 50);
-
-            // Don't hide when menu is open
-            if (isOpen) {
-                setIsHidden(false);
-                lastScrollY.current = currentScrollY;
-                return;
-            }
-
-            // At top of page, always show
-            if (currentScrollY <= 0) {
-                setIsHidden(false);
-                lastScrollY.current = currentScrollY;
-                return;
-            }
-
-            // Determine scroll direction with threshold
-            const scrollDifference = currentScrollY - lastScrollY.current;
-
-            if (scrollDifference > 10) {
-                // Scrolling down - hide nav
-                setIsHidden(true);
-            } else if (scrollDifference < -10) {
-                // Scrolling up - show nav
-                setIsHidden(false);
-            }
-
-            lastScrollY.current = currentScrollY;
+            setHasScrolled(window.scrollY > 50);
         };
 
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [isOpen]);
+    }, []);
 
-    // Navigation container classes based on scroll state
+    // Navigation container — always visible, gains backdrop on scroll
     const navContainerClasses = `
-        fixed top-0 right-0 z-50 p-6 md:p-8 flex items-center gap-8 font-serif pointer-events-auto text-[var(--color-primary)]
+        fixed top-0 right-0 z-50 p-4 md:p-6 flex items-center gap-6 md:gap-8 font-serif pointer-events-auto text-[var(--color-primary)]
         transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-        ${isHidden && !isOpen ? 'translate-y-[-100%]' : 'translate-y-0'}
-        ${hasScrolled && !isHidden ? 'bg-[var(--color-background)]/80 backdrop-blur-md shadow-lg rounded-bl-2xl' : ''}
+        ${hasScrolled ? 'bg-[var(--color-background)]/80 backdrop-blur-md shadow-sm rounded-bl-2xl' : ''}
     `.trim().replace(/\s+/g, ' ');
 
     const logoContainerClasses = `
-        fixed top-0 left-0 z-50 p-6 md:p-8 pointer-events-auto
+        fixed top-0 left-0 z-50 p-4 md:p-6 pointer-events-auto
         transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]
-        ${isHidden && !isOpen ? 'translate-y-[-100%]' : 'translate-y-0'}
-        ${hasScrolled && !isHidden ? 'bg-[var(--color-background)]/80 backdrop-blur-md shadow-lg rounded-br-2xl' : ''}
+        ${hasScrolled ? 'bg-[var(--color-background)]/80 backdrop-blur-md shadow-sm rounded-br-2xl' : ''}
     `.trim().replace(/\s+/g, ' ');
 
     return (
@@ -97,7 +57,7 @@ export default function Navigation() {
             {/* Logo - Independent Layout (Hidden on Home) */}
             {pathname !== '/' && (
                 <div className={logoContainerClasses}>
-                    <Link href="/" className="relative block w-16 h-16 md:w-20 md:h-20 transition-transform duration-700 hover:scale-105">
+                    <Link href="/" className="relative block w-14 h-14 md:w-16 md:h-16 transition-transform duration-700 hover:scale-105">
                         <Image
                             src="/logo.png"
                             alt="HTK"
@@ -110,7 +70,7 @@ export default function Navigation() {
                 </div>
             )}
 
-            {/* Menu & Cart - Independent Layout */}
+            {/* Menu & Cart - Always visible fixed nav */}
             <div className={navContainerClasses}>
                 {/* User Greeting */}
                 {user && (
@@ -124,27 +84,27 @@ export default function Navigation() {
                     </div>
                 )}
 
-                {/* Main Navigation Links - Visible & Large */}
-                <div className="hidden md:flex gap-8 items-center">
-                    <Link href="/about" className="text-sm hover:opacity-50 font-bold">
+                {/* Main Navigation Links */}
+                <div className="hidden md:flex gap-6 items-center">
+                    <Link href="/about" className="text-sm hover:opacity-50 font-bold transition-opacity duration-300">
                         About
                     </Link>
                     {!user && (
-                        <Link href="/login" className="text-sm hover:opacity-50 font-bold">
+                        <Link href="/login" className="text-sm hover:opacity-50 font-bold transition-opacity duration-300">
                             Login
                         </Link>
                     )}
                 </div>
 
                 {/* Cart Trigger */}
-                <button onClick={() => setCartOpen(true)} className="text-xs hover:opacity-50 font-medium">
+                <button onClick={() => setCartOpen(true)} className="text-xs hover:opacity-50 font-medium transition-opacity duration-300">
                     Cart ({items.length})
                 </button>
 
                 {/* Menu Trigger */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="text-xs hover:opacity-50 font-medium"
+                    className="text-xs hover:opacity-50 font-medium transition-opacity duration-300"
                 >
                     {isOpen ? 'Close' : 'Menu'}
                 </button>
@@ -196,4 +156,3 @@ export default function Navigation() {
         </>
     );
 }
-
