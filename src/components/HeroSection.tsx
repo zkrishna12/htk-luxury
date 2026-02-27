@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 
 export default function HeroSection() {
@@ -33,12 +33,9 @@ export default function HeroSection() {
         };
     }, []);
 
-    // Parallax multipliers
     const parallaxSlow = scrollY * 0.15;
     const parallaxMed = scrollY * 0.3;
-    const parallaxFast = scrollY * 0.5;
     const opacityFade = Math.max(0, 1 - scrollY / 600);
-    const scaleUp = 1 + scrollY * 0.0003;
 
     return (
         <section ref={heroRef} className="apple-hero relative overflow-hidden" style={{ minHeight: '100vh' }}>
@@ -46,181 +43,157 @@ export default function HeroSection() {
             {/* === Dark cinematic background === */}
             <div className="absolute inset-0 bg-[#0a0a08]" />
 
-            {/* Ambient glow orbs - slow drift */}
+            {/* Ambient glow orbs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                <div
-                    className="apple-glow-orb"
-                    style={{
-                        width: '800px', height: '800px',
-                        background: 'radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 60%)',
-                        top: '-20%', right: '-10%',
-                        transform: `translate(0, ${parallaxSlow}px)`,
-                    }}
-                />
-                <div
-                    className="apple-glow-orb"
-                    style={{
-                        width: '600px', height: '600px',
-                        background: 'radial-gradient(circle, rgba(31,61,43,0.08) 0%, transparent 60%)',
-                        bottom: '-10%', left: '-10%',
-                        transform: `translate(0, ${-parallaxSlow}px)`,
-                    }}
-                />
+                <div className="apple-glow-orb" style={{
+                    width: '800px', height: '800px',
+                    background: 'radial-gradient(circle, rgba(212,175,55,0.06) 0%, transparent 60%)',
+                    top: '-20%', right: '-10%',
+                    transform: `translate(0, ${parallaxSlow}px)`,
+                }} />
+                <div className="apple-glow-orb" style={{
+                    width: '600px', height: '600px',
+                    background: 'radial-gradient(circle, rgba(31,61,43,0.08) 0%, transparent 60%)',
+                    bottom: '-10%', left: '-10%',
+                    transform: `translate(0, ${-parallaxSlow}px)`,
+                }} />
             </div>
 
-            {/* === Main Content with parallax layers === */}
-            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center"
-                 style={{ opacity: opacityFade }}>
+            {/* ===== ORBITING PRODUCT IMAGES - Fully visible with dramatic animations ===== */}
+            <div className="absolute inset-0 pointer-events-none z-[5]" aria-hidden="true" style={{ perspective: '1000px' }}>
 
-                {/* Logo - mask reveal */}
-                <div
-                    className={`apple-mask-reveal mb-8 ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        transitionDelay: '300ms',
-                        transform: `translateY(${-parallaxMed}px)`
-                    }}
-                >
-                    <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
-                        <Image
-                            src="/logo.png"
-                            alt="HTK Enterprises"
-                            fill
-                            className="object-contain"
-                            priority
-                            unoptimized
-                        />
+                {/* Central orbit container */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] md:w-[700px] md:h-[700px]">
+
+                    {/* Revolving orbit ring - visible dashed */}
+                    <div className="absolute inset-0 rounded-full border border-dashed border-[#D4AF37]/15 hero-orbit-ring" />
+                    <div className="absolute inset-[60px] rounded-full border border-dashed border-white/5 hero-orbit-ring-reverse" />
+
+                    {/* HONEY - Burst in + orbit + 3D flip */}
+                    <div className={`hero-product-orbit hero-product-orbit-1 ${isLoaded ? 'revealed' : ''}`}>
+                        <div className="hero-product-card hero-product-spin-y">
+                            <div className="relative w-28 h-28 md:w-36 md:h-36">
+                                <Image src="/shop-honey.jpg" alt="Wild Honey" fill className="object-cover rounded-2xl" unoptimized />
+                                <div className="hero-product-shimmer" />
+                            </div>
+                            <div className="hero-product-glow" style={{ background: 'rgba(212,175,55,0.4)' }} />
+                            <span className="hero-product-label">Wild Honey</span>
+                        </div>
+                    </div>
+
+                    {/* TURMERIC - Burst in + orbit + 3D flip */}
+                    <div className={`hero-product-orbit hero-product-orbit-2 ${isLoaded ? 'revealed' : ''}`}>
+                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-2s' }}>
+                            <div className="relative w-24 h-24 md:w-32 md:h-32">
+                                <Image src="/shop-turmeric-pkg.jpg" alt="Turmeric" fill className="object-cover rounded-2xl" unoptimized />
+                                <div className="hero-product-shimmer" style={{ animationDelay: '1s' }} />
+                            </div>
+                            <div className="hero-product-glow" style={{ background: 'rgba(232,163,23,0.4)' }} />
+                            <span className="hero-product-label">Turmeric</span>
+                        </div>
+                    </div>
+
+                    {/* SUGAR - Burst in + orbit + 3D flip */}
+                    <div className={`hero-product-orbit hero-product-orbit-3 ${isLoaded ? 'revealed' : ''}`}>
+                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-4s' }}>
+                            <div className="relative w-24 h-24 md:w-32 md:h-32">
+                                <Image src="/shop-sugar.jpg" alt="Country Sugar" fill className="object-cover rounded-2xl" unoptimized />
+                                <div className="hero-product-shimmer" style={{ animationDelay: '2s' }} />
+                            </div>
+                            <div className="hero-product-glow" style={{ background: 'rgba(139,115,85,0.4)' }} />
+                            <span className="hero-product-label">Country Sugar</span>
+                        </div>
+                    </div>
+
+                    {/* COFFEE - Burst in + orbit */}
+                    <div className={`hero-product-orbit hero-product-orbit-4 ${isLoaded ? 'revealed' : ''}`}>
+                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-1s' }}>
+                            <div className="relative w-20 h-20 md:w-28 md:h-28">
+                                <Image src="/wild-honey.png" alt="Coffee" fill className="object-contain rounded-2xl" unoptimized />
+                                <div className="hero-product-shimmer" style={{ animationDelay: '3s' }} />
+                            </div>
+                            <div className="hero-product-glow" style={{ background: 'rgba(212,175,55,0.3)' }} />
+                        </div>
                     </div>
                 </div>
 
-                {/* Headline - staggered slide+fade */}
+                {/* Particle burst effect on load */}
+                {isLoaded && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        {[...Array(16)].map((_, i) => (
+                            <div key={i} className="hero-burst-particle" style={{
+                                '--burst-angle': `${(360 / 16) * i}deg`,
+                                '--burst-distance': `${120 + Math.random() * 180}px`,
+                                '--burst-delay': `${i * 0.05}s`,
+                                '--burst-size': `${3 + Math.random() * 5}px`,
+                                background: i % 3 === 0 ? '#D4AF37' : i % 3 === 1 ? '#BFA76A' : '#fff',
+                            } as React.CSSProperties} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* === Main Content === */}
+            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center"
+                 style={{ opacity: opacityFade }}>
+
+                {/* Logo */}
+                <div className={`apple-mask-reveal mb-8 ${isLoaded ? 'revealed' : ''}`}
+                     style={{ transitionDelay: '300ms', transform: `translateY(${-parallaxMed}px)` }}>
+                    <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
+                        <Image src="/logo.png" alt="HTK Enterprises" fill className="object-contain" priority unoptimized />
+                    </div>
+                </div>
+
+                {/* Headline */}
                 <div style={{ transform: `translateY(${-parallaxMed * 0.8}px)` }}>
                     <h1 className="font-serif text-white leading-[1.1]">
-                        <span
-                            className={`block apple-text-reveal text-5xl md:text-7xl lg:text-8xl font-bold ${isLoaded ? 'revealed' : ''}`}
-                            style={{ transitionDelay: '600ms' }}
-                        >
+                        <span className={`block apple-text-reveal text-5xl md:text-7xl lg:text-8xl font-bold ${isLoaded ? 'revealed' : ''}`}
+                              style={{ transitionDelay: '600ms' }}>
                             Nature&apos;s Purity,
                         </span>
-                        <span
-                            className={`block apple-text-reveal text-4xl md:text-6xl lg:text-7xl font-bold mt-2 ${isLoaded ? 'revealed' : ''}`}
-                            style={{
-                                transitionDelay: '900ms',
-                                color: '#D4AF37',
-                                textShadow: '0 0 80px rgba(212,175,55,0.3)'
-                            }}
-                        >
+                        <span className={`block apple-text-reveal text-4xl md:text-6xl lg:text-7xl font-bold mt-2 ${isLoaded ? 'revealed' : ''}`}
+                              style={{ transitionDelay: '900ms', color: '#D4AF37', textShadow: '0 0 80px rgba(212,175,55,0.3)' }}>
                             Professionally Delivered.
                         </span>
                     </h1>
                 </div>
 
-                {/* Golden accent line - width reveal */}
-                <div
-                    className={`apple-line-reveal mt-8 mb-8 ${isLoaded ? 'revealed' : ''}`}
-                    style={{ transitionDelay: '1100ms' }}
-                />
+                {/* Golden accent line */}
+                <div className={`apple-line-reveal mt-8 mb-8 ${isLoaded ? 'revealed' : ''}`}
+                     style={{ transitionDelay: '1100ms' }} />
 
                 {/* Subtitle */}
-                <p
-                    className={`apple-text-reveal text-base md:text-lg text-white/50 max-w-lg mx-auto font-light tracking-wide leading-relaxed ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        transitionDelay: '1200ms',
-                        transform: `translateY(${-parallaxSlow}px)`
-                    }}
-                >
+                <p className={`apple-text-reveal text-base md:text-lg text-white/50 max-w-lg mx-auto font-light tracking-wide leading-relaxed ${isLoaded ? 'revealed' : ''}`}
+                   style={{ transitionDelay: '1200ms', transform: `translateY(${-parallaxSlow}px)` }}>
                     From pure organic harvests to refined corporate expressions.
                     Three years of trust, now at your doorstep.
                 </p>
 
                 {/* CTA Buttons */}
-                <div
-                    className={`flex flex-col sm:flex-row gap-4 mt-12 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        transitionDelay: '1400ms',
-                        transform: `translateY(${-parallaxSlow * 0.5}px)`
-                    }}
-                >
-                    <a
-                        href="/shop"
-                        className="apple-cta-primary group relative py-4 px-10 overflow-hidden"
-                    >
-                        <span className="relative z-10 text-xs uppercase tracking-[0.25em] font-medium text-[#0a0a08]">
-                            Shop Collection
-                        </span>
+                <div className={`flex flex-col sm:flex-row gap-4 mt-12 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                     style={{ transitionDelay: '1400ms', transform: `translateY(${-parallaxSlow * 0.5}px)` }}>
+                    <a href="/shop" className="apple-cta-primary group relative py-4 px-10 overflow-hidden">
+                        <span className="relative z-10 text-xs uppercase tracking-[0.25em] font-medium text-[#0a0a08]">Shop Collection</span>
                         <span className="apple-cta-shine" />
                     </a>
-                    <a
-                        href="/corporate-gifting"
-                        className="apple-cta-secondary py-4 px-10 text-xs uppercase tracking-[0.25em] font-medium"
-                    >
+                    <a href="/corporate-gifting" className="apple-cta-secondary py-4 px-10 text-xs uppercase tracking-[0.25em] font-medium">
                         Corporate Gifting
                     </a>
                 </div>
 
-                {/* Trust badges - subtle fade */}
-                <div
-                    className={`flex items-center gap-8 mt-16 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                    style={{ transitionDelay: '1700ms' }}
-                >
+                {/* Trust badges */}
+                <div className={`flex items-center gap-8 mt-16 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                     style={{ transitionDelay: '1700ms' }}>
                     {['100% Organic', 'Women-Led', 'Since 2023'].map((label, i) => (
-                        <span key={i} className="text-[10px] uppercase tracking-[0.3em] text-white/25">
-                            {label}
-                        </span>
+                        <span key={i} className="text-[10px] uppercase tracking-[0.3em] text-white/25">{label}</span>
                     ))}
                 </div>
             </div>
 
-            {/* === Floating Product Images with 3D Perspective === */}
-            <div className="absolute inset-0 pointer-events-none z-5 overflow-hidden" aria-hidden="true" style={{ perspective: '1200px' }}>
-
-                {/* Honey - left drift */}
-                <div
-                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        top: '15%', left: '5%',
-                        width: '180px', height: '180px',
-                        transitionDelay: '1800ms',
-                        transform: `translateY(${parallaxFast * 0.6}px) rotateY(8deg) rotateX(-3deg) scale(${scaleUp})`,
-                        opacity: isLoaded ? 0.15 : 0,
-                    }}
-                >
-                    <Image src="/shop-honey.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
-                </div>
-
-                {/* Turmeric - right drift */}
-                <div
-                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        top: '25%', right: '3%',
-                        width: '160px', height: '160px',
-                        transitionDelay: '2000ms',
-                        transform: `translateY(${parallaxFast * 0.4}px) rotateY(-10deg) rotateX(5deg) scale(${scaleUp})`,
-                        opacity: isLoaded ? 0.12 : 0,
-                    }}
-                >
-                    <Image src="/shop-turmeric-pkg.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
-                </div>
-
-                {/* Sugar - bottom left */}
-                <div
-                    className={`apple-float-product ${isLoaded ? 'revealed' : ''}`}
-                    style={{
-                        bottom: '12%', left: '10%',
-                        width: '140px', height: '140px',
-                        transitionDelay: '2200ms',
-                        transform: `translateY(${parallaxFast * 0.3}px) rotateY(12deg) rotateX(6deg) scale(${scaleUp})`,
-                        opacity: isLoaded ? 0.10 : 0,
-                    }}
-                >
-                    <Image src="/shop-sugar.jpg" alt="" fill className="object-cover rounded-xl" unoptimized />
-                </div>
-            </div>
-
             {/* Scroll indicator */}
-            <div
-                className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                style={{ transitionDelay: '2400ms' }}
-            >
+            <div className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
+                 style={{ transitionDelay: '2400ms' }}>
                 <span className="text-[9px] uppercase tracking-[0.4em] text-white/30">Scroll</span>
                 <div className="w-[1px] h-10 relative overflow-hidden">
                     <div className="apple-scroll-line" />
