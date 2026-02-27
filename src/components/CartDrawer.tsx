@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { auth, db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { sendAdminNotification } from '@/lib/adminNotifications';
+import { sendWhatsAppOrderNotification } from '@/lib/whatsappNotification';
 
 export default function CartDrawer() {
     const {
@@ -162,7 +163,7 @@ export default function CartDrawer() {
                         })
                     }).catch(err => console.error("Email Trigger Failed", err));
 
-                    // Send admin notification for new order
+                    // Send admin notification for new order (email)
                     sendAdminNotification({
                         type: 'order',
                         data: {
@@ -173,6 +174,17 @@ export default function CartDrawer() {
                             itemCount: items.length,
                             address: `${address.houseNumber}, ${address.area}, ${address.city}, ${address.state} - ${address.pincode}`
                         }
+                    });
+
+                    // Send WhatsApp notification for new order
+                    sendWhatsAppOrderNotification({
+                        paymentId: response.razorpay_payment_id,
+                        customerName: address.name,
+                        phone: address.phone,
+                        total: total,
+                        itemCount: items.length,
+                        items: items.map((i: any) => `${i.name} x${i.quantity}`).join(', '),
+                        address: `${address.houseNumber}, ${address.area}, ${address.city}, ${address.state} - ${address.pincode}`
                     });
 
                     console.log("Order saved.");
