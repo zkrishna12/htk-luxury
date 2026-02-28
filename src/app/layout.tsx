@@ -44,6 +44,7 @@ import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
+import { RewardsProvider } from "@/context/RewardsContext";
 import CartDrawer from "@/components/CartDrawer";
 import LuxuryBackground from "@/components/LuxuryBackground";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -52,6 +53,7 @@ import StructuredData from "@/components/StructuredData";
 
 import NewsletterPopup from '@/components/NewsletterPopup';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import AbandonedCartRecovery from '@/components/AbandonedCartRecovery';
 
 
 export default function RootLayout({
@@ -73,6 +75,7 @@ export default function RootLayout({
           <CurrencyProvider>
             <CartProvider>
               <WishlistProvider>
+                <RewardsProvider>
                 <LuxuryBackground />
                 <Navigation />
                 <CartDrawer />
@@ -82,7 +85,9 @@ export default function RootLayout({
                 <NewsletterPopup />
                 <ChatBot />
                 <WhatsAppButton />
+                <AbandonedCartRecovery />
                 <Footer />
+                </RewardsProvider>
               </WishlistProvider>
             </CartProvider>
           </CurrencyProvider>

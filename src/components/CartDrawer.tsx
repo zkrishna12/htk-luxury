@@ -10,6 +10,7 @@ import { auth, db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { sendAdminNotification } from '@/lib/adminNotifications';
 import { sendWhatsAppOrderNotification } from '@/lib/whatsappNotification';
+import { useRewards, rupeesToPoints, pointsToRupees } from '@/context/RewardsContext';
 
 export default function CartDrawer() {
     const {
@@ -26,10 +27,15 @@ export default function CartDrawer() {
         removeCoupon
     } = useCart();
     const router = useRouter();
+    const { points, canRedeem, addPoints } = useRewards();
     const [step, setStep] = React.useState('cart'); // 'cart' | 'address'
     const [loading, setLoading] = React.useState(false);
     const [showSuccess, setShowSuccess] = React.useState(false);
     const [lastOrder, setLastOrder] = React.useState<any>(null);
+    // Rewards redemption state
+    const [redeemedPoints, setRedeemedPoints] = React.useState(0);
+    const [redeemApplied, setRedeemApplied] = React.useState(false);
+    const [earnedPointsThisOrder, setEarnedPointsThisOrder] = React.useState(0);
 
     const [address, setAddress] = React.useState({
         name: '',
@@ -56,8 +62,31 @@ export default function CartDrawer() {
         if (cartOpen) {
             setStep('cart');
             setShowSuccess(false);
+            setRedeemedPoints(0);
+            setRedeemApplied(false);
+            setEarnedPointsThisOrder(0);
         }
     }, [cartOpen]);
+
+    // Compute redeemable points (round down to nearest 100)
+    const maxRedeemablePoints = Math.floor(points / 100) * 100;
+    const pointsDiscount = redeemApplied ? pointsToRupees(redeemedPoints) : 0;
+    const finalTotal = Math.max(total - pointsDiscount, 0);
+
+    const handleApplyRedemption = () => {
+        // Redeem all available (rounded to 100) but cap so discount <= total
+        const maxByTotal = Math.floor(total / 10) * 100; // 100pts = ₹10, total ÷ 10 * 100
+        const toRedeem = Math.min(maxRedeemablePoints, maxByTotal);
+        if (toRedeem >= 100) {
+            setRedeemedPoints(toRedeem);
+            setRedeemApplied(true);
+        }
+    };
+
+    const handleRemoveRedemption = () => {
+        setRedeemedPoints(0);
+        setRedeemApplied(false);
+    };
 
     if (!cartOpen) return null;
 
@@ -152,7 +181,7 @@ export default function CartDrawer() {
 
         const options = {
             key: "rzp_live_RyH14ZV1BzEA8D",
-            amount: total * 100,
+            amount: finalTotal * 100,
             currency: "INR",
             name: "HTK Enterprises",
             description: "Organic Goods",
@@ -169,7 +198,9 @@ export default function CartDrawer() {
                         userId: auth.currentUser?.uid || 'guest',
                         userPhone: auth.currentUser?.phoneNumber || address.phone,
                         items: items,
-                        total: total,
+                        total: finalTotal,
+                        originalTotal: total,
+                        ...(redeemApplied ? { redeemedPoints, pointsDiscount } : {}),
                         address: address,
                         paymentId: response.razorpay_payment_id,
                         status: 'paid',
@@ -197,6 +228,14 @@ export default function CartDrawer() {
                         // We do NOT block the success screen for this.
                     }
 
+                    // 4. Award loyalty points (non-blocking)
+                    const pointsEarned = rupeesToPoints(finalTotal);
+                    if (pointsEarned > 0 && auth.currentUser) {
+                        addPoints(pointsEarned, `Purchase: Order #${response.razorpay_payment_id.slice(-8)}`)
+                            .catch(err => console.error('Points award failed:', err));
+                    }
+                    setEarnedPointsThisOrder(pointsEarned);
+
                     // Trigger Email API (Non-blocking)
                     fetch('/api/email', {
                         method: 'POST',
@@ -215,7 +254,7 @@ export default function CartDrawer() {
                             paymentId: response.razorpay_payment_id,
                             customerName: address.name,
                             phone: address.phone,
-                            total: total,
+                            total: finalTotal,
                             itemCount: items.length,
                             address: `${address.houseNumber}, ${address.area}, ${address.city}, ${address.state} - ${address.pincode}`
                         }
@@ -226,7 +265,7 @@ export default function CartDrawer() {
                         paymentId: response.razorpay_payment_id,
                         customerName: address.name,
                         phone: address.phone,
-                        total: total,
+                        total: finalTotal,
                         itemCount: items.length,
                         items: items.map((i: any) => `${i.name} x${i.quantity}`).join(', '),
                         address: `${address.houseNumber}, ${address.area}, ${address.city}, ${address.state} - ${address.pincode}`
@@ -296,7 +335,7 @@ export default function CartDrawer() {
 
         const options = {
             key: "rzp_live_RyH14ZV1BzEA8D",
-            amount: total * 100,
+            amount: finalTotal * 100,
             currency: "INR",
             name: "HTK Enterprises",
             description: "Organic Goods",
@@ -311,7 +350,9 @@ export default function CartDrawer() {
                         userId: auth.currentUser?.uid || 'guest',
                         userPhone: auth.currentUser?.phoneNumber || quickAddress.phone,
                         items: items,
-                        total: total,
+                        total: finalTotal,
+                        originalTotal: total,
+                        ...(redeemApplied ? { redeemedPoints, pointsDiscount } : {}),
                         address: quickAddress,
                         paymentId: response.razorpay_payment_id,
                         status: 'paid',
@@ -332,6 +373,14 @@ export default function CartDrawer() {
                         console.error("Inventory Decrement Failed:", inventoryError);
                     }
 
+                    // Award loyalty points (non-blocking)
+                    const pointsEarned = rupeesToPoints(finalTotal);
+                    if (pointsEarned > 0 && auth.currentUser) {
+                        addPoints(pointsEarned, `Purchase: Order #${response.razorpay_payment_id.slice(-8)}`)
+                            .catch(err => console.error('Points award failed:', err));
+                    }
+                    setEarnedPointsThisOrder(pointsEarned);
+
                     fetch('/api/email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -348,7 +397,7 @@ export default function CartDrawer() {
                             paymentId: response.razorpay_payment_id,
                             customerName: quickAddress.name,
                             phone: quickAddress.phone,
-                            total: total,
+                            total: finalTotal,
                             itemCount: items.length,
                             address: `${quickAddress.houseNumber}, ${quickAddress.area}, ${quickAddress.city}, ${quickAddress.state} - ${quickAddress.pincode}`
                         }
@@ -358,7 +407,7 @@ export default function CartDrawer() {
                         paymentId: response.razorpay_payment_id,
                         customerName: quickAddress.name,
                         phone: quickAddress.phone,
-                        total: total,
+                        total: finalTotal,
                         itemCount: items.length,
                         items: items.map((i: any) => `${i.name} x${i.quantity}`).join(', '),
                         address: `${quickAddress.houseNumber}, ${quickAddress.area}, ${quickAddress.city}, ${quickAddress.state} - ${quickAddress.pincode}`
@@ -404,6 +453,18 @@ export default function CartDrawer() {
                     <div className="text-6xl">✨</div>
                     <h2 className="text-3xl font-serif text-[var(--color-primary)]">Payment Successful</h2>
                     <p className="opacity-60">Your pure organic harvest is secured.</p>
+
+                    {/* Points earned badge */}
+                    {earnedPointsThisOrder > 0 && auth.currentUser && (
+                        <div className="flex items-center justify-center gap-2 py-3 px-5 rounded-sm" style={{ background: '#FFFBEB', border: '1.5px solid #D4AF37' }}>
+                            <svg viewBox="0 0 24 24" fill="#D4AF37" className="w-5 h-5 flex-shrink-0">
+                                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                            </svg>
+                            <span className="text-sm font-medium" style={{ color: '#92400E' }}>
+                                You earned <strong style={{ color: '#D4AF37' }}>+{earnedPointsThisOrder} HTK Points</strong>!
+                            </span>
+                        </div>
+                    )}
 
                     <div className="bg-[var(--color-background)] p-6 text-left space-y-2 text-sm font-sans border border-[var(--color-primary)]/10" id="receipt-content">
                         <div className="flex justify-between border-b border-black/10 pb-2 mb-2">
@@ -552,9 +613,51 @@ export default function CartDrawer() {
                                             </div>
                                         )}
 
+                                        {/* Rewards Points Redemption */}
+                                        {auth.currentUser && maxRedeemablePoints >= 100 && (
+                                            <div className="p-3 rounded-sm" style={{ background: '#FFFBEB', border: '1px solid #D4AF37' }}>
+                                                <div className="flex items-center justify-between gap-3">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <svg viewBox="0 0 24 24" fill="#D4AF37" className="w-4 h-4 flex-shrink-0">
+                                                            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                                                        </svg>
+                                                        <span className="text-xs truncate" style={{ color: '#92400E' }}>
+                                                            {redeemApplied
+                                                                ? <><strong style={{ color: '#D4AF37' }}>-₹{pointsDiscount}</strong> applied ({redeemedPoints} pts)</>  
+                                                                : <><strong>{points}</strong> pts available (₹{pointsToRupees(maxRedeemablePoints)} value)</>}
+                                                        </span>
+                                                    </div>
+                                                    {redeemApplied ? (
+                                                        <button
+                                                            onClick={handleRemoveRedemption}
+                                                            className="text-[10px] px-2 py-1 border flex-shrink-0 transition-colors hover:opacity-70"
+                                                            style={{ borderColor: '#D4AF37', color: '#92400E' }}
+                                                        >
+                                                            Remove
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={handleApplyRedemption}
+                                                            className="text-[10px] px-2 py-1 flex-shrink-0 font-medium transition-colors"
+                                                            style={{ background: '#D4AF37', color: 'white' }}
+                                                        >
+                                                            Redeem Points
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {redeemApplied && (
+                                            <div className="flex justify-between text-sm" style={{ color: '#D4AF37' }}>
+                                                <span>Points Discount</span>
+                                                <span>-₹{pointsDiscount}.00</span>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between text-xl font-serif pt-2 border-t border-dashed border-[var(--color-primary)]/20">
                                             <span>Total</span>
-                                            <span>₹{total}.00</span>
+                                            <span>₹{finalTotal}.00</span>
                                         </div>
 
                                         <button onClick={handleProceed} disabled={loadingAddress} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-4 font-medium disabled:opacity-60">
@@ -634,7 +737,7 @@ export default function CartDrawer() {
                                             <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                             </svg>
-                                            {loading ? 'Processing...' : `Quick Pay  ₹${total}.00`}
+                                            {loading ? 'Processing...' : `Quick Pay  ₹${finalTotal}.00`}
                                         </button>
 
                                         <p className="text-[10px] opacity-50 text-center">Or fill the form below to use a different address</p>
@@ -700,7 +803,7 @@ export default function CartDrawer() {
                                 </div>
 
                                 <button type="submit" disabled={loading} className="w-full py-4 bg-[var(--color-primary)] text-[var(--color-background)] text-xs hover:opacity-90 mt-8 font-medium disabled:opacity-60">
-                                    {loading ? 'Processing...' : `Pay ₹${total}.00`}
+                                    {loading ? 'Processing...' : `Pay ₹${finalTotal}.00`}
                                 </button>
                                 <button type="button" onClick={() => setStep('cart')} className="w-full text-xs underline opacity-50 hover:opacity-100">
                                     Back to Cart

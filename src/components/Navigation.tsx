@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useRewards } from '@/context/RewardsContext';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 
@@ -13,6 +14,7 @@ export default function Navigation() {
     const [isOpen, setIsOpen] = useState(false);
     const { setCartOpen, items } = useCart();
     const { wishlistCount } = useWishlist();
+    const { points } = useRewards();
     const pathname = usePathname();
     const [user, setUser] = useState<User | null>(null);
     const [hasScrolled, setHasScrolled] = useState(false);
@@ -123,6 +125,32 @@ export default function Navigation() {
                     )}
                 </Link>
 
+                {/* Rewards Link */}
+                {user && (
+                    <Link
+                        href="/rewards"
+                        className="relative text-xs hover:opacity-50 font-medium transition-opacity duration-300 flex items-center gap-1"
+                        title="Rewards Points"
+                        aria-label="Rewards Points"
+                    >
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill={points > 0 ? '#D4AF37' : 'none'}
+                            stroke={points > 0 ? '#D4AF37' : 'currentColor'}
+                            strokeWidth="1.5"
+                        >
+                            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                        </svg>
+                        {points > 0 && (
+                            <span className="absolute -top-2 -right-2 min-w-[20px] h-4 flex items-center justify-center text-white text-[8px] font-bold rounded-full px-0.5" style={{ background: '#D4AF37' }}>
+                                {points >= 1000 ? `${(points / 1000).toFixed(1)}k` : points}
+                            </span>
+                        )}
+                    </Link>
+                )}
+
                 {/* Cart Trigger */}
                 <button onClick={() => setCartOpen(true)} className="text-xs hover:opacity-50 font-medium transition-opacity duration-300">
                     Cart ({items.length})
@@ -171,6 +199,16 @@ export default function Navigation() {
                         {user && (
                             <Link href="/orders" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
                                 My History
+                            </Link>
+                        )}
+                        {user && (
+                            <Link href="/rewards" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
+                                <span className="inline-flex items-center gap-2">
+                                    <svg viewBox="0 0 24 24" fill="#D4AF37" width="28" height="28">
+                                        <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                                    </svg>
+                                    My Rewards
+                                </span>
                             </Link>
                         )}
                     </nav>
