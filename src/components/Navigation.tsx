@@ -172,42 +172,42 @@ export default function Navigation() {
                 {/* Scrollable Container */}
                 <div className="flex-1 w-full flex flex-col items-center justify-center overflow-y-auto py-24 px-6 hide-scrollbar">
                     <nav className="flex flex-col gap-6 md:gap-10 text-center shrink-0">
-                        <Link href="/" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Home
                         </Link>
-                        <Link href="/shop" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/shop" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Shop Collection
                         </Link>
-                        <Link href="/organic" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/organic" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Organic Goods
                         </Link>
-                        <Link href="/corporate-gifting" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/corporate-gifting" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Corporate Gifting
                         </Link>
-                        <Link href="/about" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/about" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Our Philosophy
                         </Link>
-                        <Link href="/reviews" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/reviews" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Community Stories
                         </Link>
-                        <Link href="/enquiry" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/enquiry" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Business Enquiry
                         </Link>
-                        <Link href="/feedback" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
+                        <Link href="/feedback" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500">
                             Feedback
                         </Link>
                         {user && (
-                            <Link href="/orders" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
+                            <Link href="/orders" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
                                 My History
                             </Link>
                         )}
                         {user && (
-                            <Link href="/account" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
+                            <Link href="/account" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
                                 My Account
                             </Link>
                         )}
                         {user && (
-                            <Link href="/rewards" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
+                            <Link href="/rewards" className="text-xl md:text-2xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
                                 <span className="inline-flex items-center gap-2">
                                     <svg viewBox="0 0 24 24" fill="#D4AF37" width="28" height="28">
                                         <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>

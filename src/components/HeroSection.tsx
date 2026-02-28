@@ -1,212 +1,268 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Image from 'next/image';
 
+/**
+ * HeroSection — HTK Enterprises
+ *
+ * Design: Full-viewport hero, warm cream background, four product image cards
+ * at the corners, headline + CTA in the center.
+ *
+ * Animations: Pure CSS @keyframes — NO isLoaded state toggling opacity.
+ * Elements animate from opacity:0 to opacity:1 inside the keyframe itself,
+ * so they are always visible on first render (forward-fill mode via
+ * animation-fill-mode: forwards).
+ *
+ * Parallax: minimal — only a translateY offset driven by scroll, no reveal logic.
+ */
+
+const PRODUCTS = [
+    {
+        src: '/shop-honey.jpg',
+        alt: 'Mountain Honey',
+        label: 'Mountain Honey',
+        position: 'top-left',
+        floatClass: 'hero-float-1',
+        delay: '0s',
+    },
+    {
+        src: '/shop-turmeric-pkg.jpg',
+        alt: 'Turmeric',
+        label: 'Turmeric',
+        position: 'top-right',
+        floatClass: 'hero-float-2',
+        delay: '0.2s',
+    },
+    {
+        src: '/shop-sugar.jpg',
+        alt: 'Country Sugar',
+        label: 'Country Sugar',
+        position: 'bottom-left',
+        floatClass: 'hero-float-3',
+        delay: '0.4s',
+    },
+    {
+        src: '/shop-coffee-v2.jpg',
+        alt: 'Coffee',
+        label: 'Arabica Coffee',
+        position: 'bottom-right',
+        floatClass: 'hero-float-4',
+        delay: '0.6s',
+    },
+];
+
+/** Maps position name → absolute positioning classes */
+const POSITION_CLASSES: Record<string, string> = {
+    'top-left': 'top-[8%] left-[3%] md:top-[12%] md:left-[5%]',
+    'top-right': 'top-[8%] right-[3%] md:top-[12%] md:right-[5%]',
+    'bottom-left': 'bottom-[10%] left-[3%] md:bottom-[12%] md:left-[5%]',
+    'bottom-right': 'bottom-[10%] right-[3%] md:bottom-[12%] md:right-[5%]',
+};
+
 export default function HeroSection() {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [scrollY, setScrollY] = useState(0);
     const heroRef = useRef<HTMLElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
+    /* ------------------------------------------------------------------
+     * Minimal scroll-based parallax — only shifts position, never hides.
+     * ------------------------------------------------------------------ */
     useEffect(() => {
-        const timer = setTimeout(() => setIsLoaded(true), 200);
-
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (prefersReducedMotion) {
-            setIsLoaded(true);
-            return;
-        }
+        let rafId: number;
 
         const handleScroll = () => {
-            if (heroRef.current) {
-                const rect = heroRef.current.getBoundingClientRect();
-                if (rect.bottom > 0) {
-                    setScrollY(window.scrollY);
-                }
-            }
+            if (!heroRef.current || !contentRef.current) return;
+            const scrollY = window.scrollY;
+            const rect = heroRef.current.getBoundingClientRect();
+            if (rect.bottom < 0) return; // skip if hero is off-screen
+            const offset = scrollY * 0.12;
+            contentRef.current.style.transform = `translateY(${-offset}px)`;
         };
 
-        window.addEventListener('scroll', handleScroll, { passive: true });
+        const onScroll = () => {
+            cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(handleScroll);
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
         return () => {
-            window.removeEventListener('scroll', handleScroll);
-            clearTimeout(timer);
+            window.removeEventListener('scroll', onScroll);
+            cancelAnimationFrame(rafId);
         };
     }, []);
 
-    const parallaxSlow = scrollY * 0.15;
-    const parallaxMed = scrollY * 0.3;
-    const opacityFade = Math.max(0, 1 - scrollY / 600);
-
     return (
-        <section ref={heroRef} className="apple-hero relative overflow-hidden" style={{ minHeight: '100vh' }}>
-
-            {/* === Light warm background === */}
+        <section
+            ref={heroRef}
+            className="apple-hero relative overflow-hidden"
+            style={{ minHeight: '100vh' }}
+        >
+            {/* ── Background ── */}
             <div className="absolute inset-0 bg-[#F8F6F2]" />
 
-            {/* Subtle warm gradient overlay */}
-            <div className="absolute inset-0" style={{
-                background: 'radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.06) 0%, transparent 60%)'
-            }} />
+            {/* Subtle radial gold top-glow */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    background:
+                        'radial-gradient(ellipse 80% 40% at 50% 0%, rgba(212,175,55,0.07) 0%, transparent 70%)',
+                }}
+            />
 
-            {/* Ambient glow orbs - soft warm tones */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-                <div className="apple-glow-orb" style={{
-                    width: '800px', height: '800px',
-                    background: 'radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 60%)',
-                    top: '-20%', right: '-10%',
-                    transform: `translate(0, ${parallaxSlow}px)`,
-                }} />
-                <div className="apple-glow-orb" style={{
-                    width: '600px', height: '600px',
-                    background: 'radial-gradient(circle, rgba(31,61,43,0.05) 0%, transparent 60%)',
-                    bottom: '-10%', left: '-10%',
-                    transform: `translate(0, ${-parallaxSlow}px)`,
-                }} />
-            </div>
+            {/* Subtle dot-grid texture */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    opacity: 0.035,
+                    backgroundImage:
+                        'radial-gradient(circle at 1.5px 1.5px, #1F3D2B 1px, transparent 0)',
+                    backgroundSize: '48px 48px',
+                }}
+            />
 
-            {/* Decorative leaf/dot pattern - very subtle */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
-                backgroundImage: 'radial-gradient(circle at 2px 2px, #1F3D2B 1px, transparent 0)',
-                backgroundSize: '60px 60px'
-            }} />
-
-            {/* ===== ORBITING PRODUCT IMAGES ===== */}
-            <div className="absolute inset-0 pointer-events-none z-[5]" aria-hidden="true" style={{ perspective: '1000px' }}>
-
-                {/* Central orbit container */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] md:w-[700px] md:h-[700px]">
-
-                    {/* Revolving orbit ring - gold dashed */}
-                    <div className="absolute inset-0 rounded-full border border-dashed border-[#D4AF37]/20 hero-orbit-ring" />
-                    <div className="absolute inset-[60px] rounded-full border border-dashed border-[#1F3D2B]/8 hero-orbit-ring-reverse" />
-
-                    {/* HONEY */}
-                    <div className={`hero-product-orbit hero-product-orbit-1 ${isLoaded ? 'revealed' : ''}`}>
-                        <div className="hero-product-card hero-product-spin-y">
-                            <div className="relative w-28 h-28 md:w-36 md:h-36">
-                                <Image src="/shop-honey.jpg" alt="Wild Honey" fill className="object-cover rounded-2xl shadow-lg" unoptimized />
-                                <div className="hero-product-shimmer-light" />
-                            </div>
-                            <div className="hero-product-glow-light" style={{ background: 'rgba(212,175,55,0.2)' }} />
-                            <span className="hero-product-label-light">Wild Honey</span>
+            {/* ── Product Image Cards (four corners) ── */}
+            {PRODUCTS.map((product) => (
+                <div
+                    key={product.src}
+                    className={`absolute z-10 ${POSITION_CLASSES[product.position]} ${product.floatClass} hero-product-entry`}
+                    style={{ animationDelay: product.delay }}
+                >
+                    {/* Card */}
+                    <div className="
+                        relative
+                        flex flex-col items-center gap-2
+                        bg-white/80 backdrop-blur-sm
+                        rounded-2xl
+                        p-2.5
+                        shadow-[0_8px_32px_rgba(31,61,43,0.10),0_2px_8px_rgba(31,61,43,0.06)]
+                        border border-white/90
+                        w-[120px] h-auto
+                        md:w-[160px]
+                    ">
+                        {/* Image wrapper — fixed square */}
+                        <div className="relative w-[96px] h-[96px] md:w-[132px] md:h-[132px] rounded-xl overflow-hidden">
+                            <Image
+                                src={product.src}
+                                alt={product.alt}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                            />
+                            {/* Shimmer overlay */}
+                            <div className="hero-product-shimmer-light absolute inset-0 rounded-xl pointer-events-none" />
                         </div>
-                    </div>
 
-                    {/* TURMERIC */}
-                    <div className={`hero-product-orbit hero-product-orbit-2 ${isLoaded ? 'revealed' : ''}`}>
-                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-2s' }}>
-                            <div className="relative w-24 h-24 md:w-32 md:h-32">
-                                <Image src="/shop-turmeric-pkg.jpg" alt="Turmeric" fill className="object-cover rounded-2xl shadow-lg" unoptimized />
-                                <div className="hero-product-shimmer-light" style={{ animationDelay: '1s' }} />
-                            </div>
-                            <div className="hero-product-glow-light" style={{ background: 'rgba(232,163,23,0.2)' }} />
-                            <span className="hero-product-label-light">Turmeric</span>
-                        </div>
-                    </div>
-
-                    {/* SUGAR */}
-                    <div className={`hero-product-orbit hero-product-orbit-3 ${isLoaded ? 'revealed' : ''}`}>
-                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-4s' }}>
-                            <div className="relative w-24 h-24 md:w-32 md:h-32">
-                                <Image src="/shop-sugar.jpg" alt="Country Sugar" fill className="object-cover rounded-2xl shadow-lg" unoptimized />
-                                <div className="hero-product-shimmer-light" style={{ animationDelay: '2s' }} />
-                            </div>
-                            <div className="hero-product-glow-light" style={{ background: 'rgba(139,115,85,0.2)' }} />
-                            <span className="hero-product-label-light">Country Sugar</span>
-                        </div>
-                    </div>
-
-                    {/* COFFEE/WILD HONEY */}
-                    <div className={`hero-product-orbit hero-product-orbit-4 ${isLoaded ? 'revealed' : ''}`}>
-                        <div className="hero-product-card hero-product-spin-y" style={{ animationDelay: '-1s' }}>
-                            <div className="relative w-20 h-20 md:w-28 md:h-28">
-                                <Image src="/wild-honey.png" alt="Coffee" fill className="object-contain rounded-2xl" unoptimized />
-                                <div className="hero-product-shimmer-light" style={{ animationDelay: '3s' }} />
-                            </div>
-                            <div className="hero-product-glow-light" style={{ background: 'rgba(212,175,55,0.15)' }} />
-                        </div>
+                        {/* Label */}
+                        <span className="
+                            text-[9px] uppercase tracking-[0.22em]
+                            font-medium text-[#1F3D2B]/55
+                            text-center leading-tight
+                            w-full
+                        ">
+                            {product.label}
+                        </span>
                     </div>
                 </div>
+            ))}
 
-                {/* Particle burst effect on load - gold & green */}
-                {isLoaded && (
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                        {[...Array(16)].map((_, i) => (
-                            <div key={i} className="hero-burst-particle" style={{
-                                '--burst-angle': `${(360 / 16) * i}deg`,
-                                '--burst-distance': `${120 + Math.random() * 180}px`,
-                                '--burst-delay': `${i * 0.05}s`,
-                                '--burst-size': `${3 + Math.random() * 5}px`,
-                                background: i % 3 === 0 ? '#D4AF37' : i % 3 === 1 ? '#1F3D2B' : '#BFA76A',
-                            } as React.CSSProperties} />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* === Main Content === */}
-            <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 text-center"
-                 style={{ opacity: opacityFade }}>
-
+            {/* ── Central Content ── */}
+            <div
+                ref={contentRef}
+                className="relative z-20 flex flex-col items-center justify-center min-h-screen px-6 text-center"
+            >
                 {/* Logo */}
-                <div className={`apple-mask-reveal mb-8 ${isLoaded ? 'revealed' : ''}`}
-                     style={{ transitionDelay: '300ms', transform: `translateY(${-parallaxMed}px)` }}>
-                    <div className="relative w-28 h-28 md:w-36 md:h-36 mx-auto">
-                        <Image src="/logo.png" alt="HTK Enterprises" fill className="object-contain" priority unoptimized />
+                <div className="mb-6 hero-text-enter" style={{ animationDelay: '0.1s' }}>
+                    <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto">
+                        <Image
+                            src="/logo.png"
+                            alt="HTK Enterprises"
+                            fill
+                            className="object-contain"
+                            priority
+                            unoptimized
+                        />
                     </div>
                 </div>
 
                 {/* Headline */}
-                <div style={{ transform: `translateY(${-parallaxMed * 0.8}px)` }}>
-                    <h1 className="font-serif leading-[1.1]">
-                        <span className={`block apple-text-reveal text-5xl md:text-7xl lg:text-8xl font-bold text-[#1F3D2B] ${isLoaded ? 'revealed' : ''}`}
-                              style={{ transitionDelay: '600ms' }}>
-                            Nature&apos;s Purity,
-                        </span>
-                        <span className={`block apple-text-reveal text-4xl md:text-6xl lg:text-7xl font-bold mt-2 ${isLoaded ? 'revealed' : ''}`}
-                              style={{ transitionDelay: '900ms', color: '#D4AF37' }}>
-                            Professionally Delivered.
-                        </span>
-                    </h1>
-                </div>
+                <h1 className="font-serif leading-[1.1] max-w-2xl">
+                    <span
+                        className="block text-5xl md:text-7xl lg:text-[5.5rem] font-bold text-[#1F3D2B] hero-text-enter"
+                        style={{ animationDelay: '0.25s' }}
+                    >
+                        Nature&apos;s Purity,
+                    </span>
+                    <span
+                        className="block text-4xl md:text-6xl lg:text-7xl font-bold mt-1 hero-text-enter"
+                        style={{ color: '#D4AF37', animationDelay: '0.45s' }}
+                    >
+                        Professionally Delivered.
+                    </span>
+                </h1>
 
-                {/* Golden accent line */}
-                <div className={`apple-line-reveal mt-8 mb-8 ${isLoaded ? 'revealed' : ''}`}
-                     style={{ transitionDelay: '1100ms' }} />
+                {/* Accent line */}
+                <div
+                    className="hero-line-enter mt-8 mb-6"
+                    style={{ animationDelay: '0.65s' }}
+                />
 
                 {/* Subtitle */}
-                <p className={`apple-text-reveal text-base md:text-lg text-[#1F3D2B]/60 max-w-lg mx-auto font-light tracking-wide leading-relaxed ${isLoaded ? 'revealed' : ''}`}
-                   style={{ transitionDelay: '1200ms', transform: `translateY(${-parallaxSlow}px)` }}>
+                <p
+                    className="hero-text-enter text-base md:text-lg text-[#1F3D2B]/60 max-w-md mx-auto font-light tracking-wide leading-relaxed"
+                    style={{ animationDelay: '0.75s' }}
+                >
                     From pure organic harvests to refined corporate expressions.
+                    <br className="hidden md:block" />
                     Three years of trust, now at your doorstep.
                 </p>
 
                 {/* CTA Buttons */}
-                <div className={`flex flex-col sm:flex-row gap-4 mt-12 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                     style={{ transitionDelay: '1400ms', transform: `translateY(${-parallaxSlow * 0.5}px)` }}>
-                    <a href="/shop" className="light-cta-primary group relative py-4 px-10 overflow-hidden rounded-full">
-                        <span className="relative z-10 text-xs uppercase tracking-[0.25em] font-medium text-white">Shop Collection</span>
+                <div
+                    className="flex flex-col sm:flex-row gap-4 mt-10 hero-text-enter"
+                    style={{ animationDelay: '0.95s' }}
+                >
+                    <a
+                        href="/shop"
+                        className="light-cta-primary group relative py-4 px-10 overflow-hidden rounded-full"
+                    >
+                        <span className="relative z-10 text-xs uppercase tracking-[0.22em] font-medium text-white">
+                            Shop Collection
+                        </span>
                         <span className="apple-cta-shine" />
                     </a>
-                    <a href="/corporate-gifting" className="light-cta-secondary py-4 px-10 text-xs uppercase tracking-[0.25em] font-medium rounded-full">
+                    <a
+                        href="/corporate-gifting"
+                        className="light-cta-secondary py-4 px-10 text-xs uppercase tracking-[0.22em] font-medium rounded-full"
+                    >
                         Corporate Gifting
                     </a>
                 </div>
 
                 {/* Trust badges */}
-                <div className={`flex items-center gap-8 mt-16 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                     style={{ transitionDelay: '1700ms' }}>
-                    {['100% Organic', 'Women-Led', 'Since 2023'].map((label, i) => (
-                        <span key={i} className="text-[10px] uppercase tracking-[0.3em] text-[#1F3D2B]/30">{label}</span>
+                <div
+                    className="flex items-center gap-6 md:gap-10 mt-14 hero-text-enter"
+                    style={{ animationDelay: '1.15s' }}
+                >
+                    {['100% Organic', 'Women-Led', 'Since 2023'].map((label) => (
+                        <span
+                            key={label}
+                            className="text-[9px] uppercase tracking-[0.28em] text-[#1F3D2B]/35"
+                        >
+                            {label}
+                        </span>
                     ))}
                 </div>
             </div>
 
-            {/* Scroll indicator */}
-            <div className={`absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 apple-text-reveal ${isLoaded ? 'revealed' : ''}`}
-                 style={{ transitionDelay: '2400ms' }}>
-                <span className="text-[9px] uppercase tracking-[0.4em] text-[#1F3D2B]/30">Scroll</span>
-                <div className="w-[1px] h-10 relative overflow-hidden">
+            {/* ── Scroll Indicator ── */}
+            <div
+                className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-2 hero-text-enter"
+                style={{ animationDelay: '1.4s' }}
+            >
+                <span className="text-[9px] uppercase tracking-[0.38em] text-[#1F3D2B]/30">
+                    Scroll
+                </span>
+                <div className="w-px h-9 relative overflow-hidden rounded-full">
                     <div className="apple-scroll-line-light" />
                 </div>
             </div>
