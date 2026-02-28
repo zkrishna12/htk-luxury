@@ -115,9 +115,9 @@ export const products = [
     {
         id: 'coffee-instant',
         name: 'Premium Instant Coffee',
-        weight: '200g',
-        price: 450,
-        mrp: 599,
+        weight: '60g',
+        price: 250,
+        mrp: 299,
         image: '/shop-coffee-v2.jpg',
         tag: 'New Launch',
         description: 'Procured beans from Ooty, Gudaloor & Coorg. Hand picked and using amalgamation method. Chemical free. Dissolves in Hot and Cold Milk. Launching Jan 15th 2026.',
