@@ -37,6 +37,21 @@ export default function CartDrawer() {
     const [redeemApplied, setRedeemApplied] = React.useState(false);
     const [earnedPointsThisOrder, setEarnedPointsThisOrder] = React.useState(0);
 
+    // Bulk discount calculation
+    const totalItemQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    const bulkDiscountRate = totalItemQty >= 8 ? 0.12 : totalItemQty >= 5 ? 0.08 : totalItemQty >= 3 ? 0.05 : 0;
+    const bulkDiscountLabel = totalItemQty >= 8 ? '12% — 8+ items' : totalItemQty >= 5 ? '8% — 5+ items' : totalItemQty >= 3 ? '5% — 3+ items' : '';
+    const bulkDiscountAmount = Math.round(total * bulkDiscountRate);
+    // Subtotal after bulk discount
+    const subtotalAfterBulk = total - bulkDiscountAmount;
+    // Coupon discount is applied on subtotalAfterBulk
+    const couponDiscount = coupon
+        ? coupon.type === 'percentage'
+            ? Math.round(subtotalAfterBulk * coupon.value / 100)
+            : coupon.value
+        : 0;
+    const subtotalAfterCoupon = Math.max(subtotalAfterBulk - couponDiscount, 0);
+
     const [address, setAddress] = React.useState({
         name: '',
         phone: '',
@@ -71,11 +86,12 @@ export default function CartDrawer() {
     // Compute redeemable points (round down to nearest 100)
     const maxRedeemablePoints = Math.floor(points / 100) * 100;
     const pointsDiscount = redeemApplied ? pointsToRupees(redeemedPoints) : 0;
-    const finalTotal = Math.max(total - pointsDiscount, 0);
+    // Final total: bulk discount first, then coupon, then points (points do NOT stack with bulk when redeemed)
+    const finalTotal = Math.max(subtotalAfterCoupon - pointsDiscount, 0);
 
     const handleApplyRedemption = () => {
-        // Redeem all available (rounded to 100) but cap so discount <= total
-        const maxByTotal = Math.floor(total / 10) * 100; // 100pts = ₹10, total ÷ 10 * 100
+        // Redeem all available (rounded to 100) but cap so discount <= subtotalAfterCoupon
+        const maxByTotal = Math.floor(subtotalAfterCoupon / 10) * 100; // 100pts = ₹10
         const toRedeem = Math.min(maxRedeemablePoints, maxByTotal);
         if (toRedeem >= 100) {
             setRedeemedPoints(toRedeem);
@@ -200,6 +216,7 @@ export default function CartDrawer() {
                         items: items,
                         total: finalTotal,
                         originalTotal: total,
+                        ...(bulkDiscountAmount > 0 ? { bulkDiscountAmount, bulkDiscountLabel } : {}),
                         ...(redeemApplied ? { redeemedPoints, pointsDiscount } : {}),
                         address: address,
                         paymentId: response.razorpay_payment_id,
@@ -352,6 +369,7 @@ export default function CartDrawer() {
                         items: items,
                         total: finalTotal,
                         originalTotal: total,
+                        ...(bulkDiscountAmount > 0 ? { bulkDiscountAmount, bulkDiscountLabel } : {}),
                         ...(redeemApplied ? { redeemedPoints, pointsDiscount } : {}),
                         address: quickAddress,
                         paymentId: response.razorpay_payment_id,
@@ -582,6 +600,13 @@ export default function CartDrawer() {
                                 {items.length > 0 && (
                                     <div className="border-t border-[var(--color-primary)]/10 pt-6 mt-6 space-y-4">
 
+                                        {/* Bulk Discount Progress Hint */}
+                                        {totalItemQty === 2 && (
+                                            <div className="text-xs text-center py-2 px-3 rounded-sm" style={{ background: '#FFFBEB', border: '1px solid #D4AF37', color: '#92400E' }}>
+                                                Add 1 more item for <strong style={{ color: '#D4AF37' }}>5% bulk discount!</strong>
+                                            </div>
+                                        )}
+
                                         {/* Coupon Input */}
                                         <div className="flex gap-2">
                                             <input
@@ -606,10 +631,24 @@ export default function CartDrawer() {
                                             </button>
                                         </div>
 
+                                        {/* Subtotal line */}
+                                        <div className="flex justify-between text-sm opacity-60">
+                                            <span>Subtotal</span>
+                                            <span>₹{total}.00</span>
+                                        </div>
+
+                                        {/* Bulk Discount line */}
+                                        {bulkDiscountAmount > 0 && (
+                                            <div className="flex justify-between text-sm" style={{ color: '#D4AF37' }}>
+                                                <span>Bulk Discount ({bulkDiscountLabel})</span>
+                                                <span>-₹{bulkDiscountAmount}.00</span>
+                                            </div>
+                                        )}
+
                                         {coupon && (
                                             <div className="flex justify-between text-sm text-[var(--color-primary)]">
-                                                <span>Discount ({coupon.code}) <button onClick={removeCoupon} className="text-red-500 ml-2 text-xs hover:underline">(Remove)</button></span>
-                                                <span>- ₹{(total * 100 / (100 - (coupon.type === 'percentage' ? coupon.value : 0))) - total}</span>
+                                                <span>Coupon ({coupon.code}) <button onClick={removeCoupon} className="text-red-500 ml-2 text-xs hover:underline">(Remove)</button></span>
+                                                <span>-₹{couponDiscount}.00</span>
                                             </div>
                                         )}
 
@@ -652,6 +691,13 @@ export default function CartDrawer() {
                                             <div className="flex justify-between text-sm" style={{ color: '#D4AF37' }}>
                                                 <span>Points Discount</span>
                                                 <span>-₹{pointsDiscount}.00</span>
+                                            </div>
+                                        )}
+
+                                        {/* Savings Summary */}
+                                        {bulkDiscountAmount > 0 && (
+                                            <div className="text-xs text-center py-2 px-3 rounded-sm" style={{ background: '#F0FDF4', border: '1px solid #1F3D2B40', color: '#1F3D2B' }}>
+                                                You're saving <strong style={{ color: '#D4AF37' }}>₹{bulkDiscountAmount + couponDiscount + pointsDiscount}</strong> on this order!
                                             </div>
                                         )}
 

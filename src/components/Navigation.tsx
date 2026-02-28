@@ -82,8 +82,8 @@ export default function Navigation() {
                         <span className="text-xs opacity-80 font-medium">
                             Welcome, {user.displayName?.split(' ')[0] || 'Member'}
                         </span>
-                        <Link href="/orders" className="text-[10px] opacity-50 hover:opacity-100 border-b border-[var(--color-primary)]">
-                            View Orders
+                        <Link href="/account" className="text-[10px] opacity-50 hover:opacity-100 border-b border-[var(--color-primary)]">
+                            My Account
                         </Link>
                     </div>
                 )}
@@ -199,6 +199,11 @@ export default function Navigation() {
                         {user && (
                             <Link href="/orders" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
                                 My History
+                            </Link>
+                        )}
+                        {user && (
+                            <Link href="/account" className="text-3xl md:text-5xl font-serif text-[var(--color-primary)] hover:italic transition-all duration-500 opacity-60">
+                                My Account
                             </Link>
                         )}
                         {user && (

@@ -47,6 +47,7 @@ export default function Footer() {
                         <li><Link href="/enquiry" className="hover:text-[var(--color-accent)] hover:opacity-100 transition-all duration-300">Business Enquiry</Link></li>
                         <li><Link href="/feedback" className="hover:text-[var(--color-accent)] hover:opacity-100 transition-all duration-300">Feedback & Suggestions</Link></li>
                         <li><Link href="/returns" className="hover:text-[var(--color-accent)] hover:opacity-100 transition-all duration-300">Returns & Refunds</Link></li>
+                        <li><Link href="/faq" className="hover:text-[var(--color-accent)] hover:opacity-100 transition-all duration-300">FAQ</Link></li>
                     </ul>
                 </div>
 

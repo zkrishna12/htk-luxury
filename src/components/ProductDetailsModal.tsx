@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import LuxuryFrame from './LuxuryFrame';
+import { trackProductView } from './RecentlyViewed';
 import { db } from '@/lib/firebase';
 import {
     collection,
@@ -118,6 +119,16 @@ export default function ProductDetailsModal({ isOpen, onClose, product }: Produc
             setProductReviews([]);
             return;
         }
+        // Track this product as recently viewed
+        trackProductView({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            mrp: product.mrp,
+            image: product.image,
+            weight: product.weight,
+            description: product.description,
+        });
         const fetchProductReviews = async () => {
             setReviewsLoading(true);
             try {
@@ -448,6 +459,21 @@ export default function ProductDetailsModal({ isOpen, onClose, product }: Produc
                             >
                                 Add to Cart — ₹{product.price}
                             </button>
+
+                            {/* Bulk Discount Info Strip */}
+                            <div
+                                className="flex items-center justify-center gap-2 px-4 py-2.5 text-[11px] font-medium text-center"
+                                style={{ border: '1px solid #D4AF37', background: '#FFFBEB', color: '#92400E' }}
+                            >
+                                <svg viewBox="0 0 24 24" fill="#D4AF37" className="w-3.5 h-3.5 flex-shrink-0">
+                                    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+                                </svg>
+                                <span>
+                                    Buy <strong style={{ color: '#D4AF37' }}>3+ items: 5% off</strong>
+                                    {' | '}<strong style={{ color: '#D4AF37' }}>5+ items: 8% off</strong>
+                                    {' | '}<strong style={{ color: '#D4AF37' }}>8+ items: 12% off</strong>
+                                </span>
+                            </div>
 
                         </div>
                     </div>

@@ -8,11 +8,13 @@ import ProductDetailsModal from '@/components/ProductDetailsModal';
 import LuxuryFrame from '@/components/LuxuryFrame';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useCompare } from '@/context/CompareContext';
 import { products as staticProducts } from '@/lib/products'; // Direct Static Import
-import { db } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CommerceProduct } from '@/types/commerce';
 import PersonalizedRecommendations from '@/components/PersonalizedRecommendations';
+import RecentlyViewed, { trackProductView } from '@/components/RecentlyViewed';
 
 interface ProductRating {
     avg: number;
@@ -22,12 +24,49 @@ interface ProductRating {
 export default function ShopPage() {
     const { addToCart, items, removeFromCart } = useCart();
     const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+    const { addToCompare, removeFromCompare, isInCompare, compareCount } = useCompare();
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     // Initialize with Static Data immediately (Instant Load)
     const [products, setProducts] = useState<any[]>(staticProducts);
     const [productRatings, setProductRatings] = useState<Record<string, ProductRating>>({});
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
+
+    // Stock alert state: { [productId]: 'idle' | 'entering_email' | 'submitting' | 'subscribed' }
+    const [alertState, setAlertState] = useState<Record<string, string>>({});
+    const [alertEmail, setAlertEmail] = useState<Record<string, string>>({});
+
+    const isOutOfStock = (product: any) =>
+        product.stock !== undefined && product.stock <= 0;
+
+    const handleNotifyClick = (product: any) => {
+        if (auth.currentUser) {
+            // Logged in: save directly
+            handleSubscribeAlert(product, auth.currentUser.email || '');
+        } else {
+            setAlertState(s => ({ ...s, [product.id]: 'entering_email' }));
+        }
+    };
+
+    const handleSubscribeAlert = async (product: any, email: string) => {
+        if (!email.trim()) return;
+        setAlertState(s => ({ ...s, [product.id]: 'submitting' }));
+        try {
+            await addDoc(collection(db, 'stock_alerts'), {
+                productId: product.id,
+                productName: product.name,
+                userId: auth.currentUser?.uid || null,
+                email: email.trim(),
+                createdAt: serverTimestamp(),
+                notified: false,
+            });
+            setAlertState(s => ({ ...s, [product.id]: 'subscribed' }));
+        } catch (err) {
+            console.error('Stock alert subscription failed:', err);
+            setAlertState(s => ({ ...s, [product.id]: 'idle' }));
+            alert('Failed to subscribe. Please try again.');
+        }
+    };
 
     const CATEGORIES = ['All', 'Honey', 'Sugar', 'Turmeric', 'Coffee'];
 
@@ -40,7 +79,9 @@ export default function ShopPage() {
         return 'Other';
     };
 
-    const activeProducts = products.filter(p => p.isActive !== false);
+    const activeProducts = products.filter(p => p.isActive !== false || isOutOfStock(p));
+    // For display, a product is effectively out of stock if stock<=0 or isActive===false
+    const isProductOutOfStock = (p: any) => p.isActive === false || isOutOfStock(p);
     const filteredProducts = activeProducts.filter(product => {
         const matchesSearch = searchQuery.trim() === '' ||
             product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -137,6 +178,19 @@ export default function ShopPage() {
             image: product.image,
             quantity: 1
         });
+    };
+
+    const handleViewProduct = (product: any) => {
+        trackProductView({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            mrp: product.mrp,
+            image: product.image,
+            weight: product.weight,
+            description: product.description,
+        });
+        setSelectedProduct(product);
     };
 
     return (
@@ -236,7 +290,7 @@ export default function ShopPage() {
                             {/* Image Container - Click to View Details */}
                             <div
                                 className="relative aspect-[4/5] overflow-hidden bg-[var(--color-bg-warm)] cursor-pointer"
-                                onClick={() => setSelectedProduct(product)}
+                                onClick={() => handleViewProduct(product)}
                             >
                                 <Image
                                     src={product.image}
@@ -261,8 +315,17 @@ export default function ShopPage() {
                                     </span>
                                 )}
 
-                                {/* Share Button */}
-                                <div className="absolute bottom-4 left-4 z-20">
+                                {/* Sold Out Badge */}
+                                {isProductOutOfStock(product) && (
+                                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                                        <div className="bg-black/60 backdrop-blur-[2px] px-5 py-2 rotate-[-8deg]">
+                                            <span className="text-white font-serif text-lg tracking-widest uppercase">Sold Out</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Share + Compare Buttons */}
+                                <div className="absolute bottom-4 left-4 z-20 flex gap-2">
                                     <button
                                         onClick={(e) => handleShare(e, product)}
                                         title="Share this product"
@@ -275,6 +338,37 @@ export default function ShopPage() {
                                             <circle cx="18" cy="19" r="3" />
                                             <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
                                             <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                                        </svg>
+                                    </button>
+                                    {/* Compare Toggle Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            isInCompare(product.id)
+                                                ? removeFromCompare(product.id)
+                                                : addToCompare(product.id);
+                                        }}
+                                        title={isInCompare(product.id) ? 'Remove from Compare' : 'Add to Compare'}
+                                        aria-label={isInCompare(product.id) ? 'Remove from compare' : 'Add to compare'}
+                                        className="w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm transition-all duration-200 hover:scale-110"
+                                    >
+                                        {/* Scale / Balance icon */}
+                                        <svg
+                                            width="17"
+                                            height="17"
+                                            viewBox="0 0 24 24"
+                                            fill={isInCompare(product.id) ? '#D4AF37' : 'none'}
+                                            stroke={isInCompare(product.id) ? '#D4AF37' : 'currentColor'}
+                                            strokeWidth="1.8"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            className={isInCompare(product.id) ? '' : 'text-[var(--color-primary)]'}
+                                        >
+                                            <line x1="12" y1="3" x2="12" y2="20" />
+                                            <path d="M3 9l9-6 9 6" />
+                                            <path d="M5 9a4 4 0 0 0 8 0" />
+                                            <path d="M11 9a4 4 0 0 0 8 0" />
+                                            <line x1="4" y1="20" x2="20" y2="20" />
                                         </svg>
                                     </button>
                                 </div>
@@ -314,7 +408,7 @@ export default function ShopPage() {
                             <div className="p-6 text-center space-y-3 flex-1 flex flex-col justify-end">
                                 <h3
                                     className="font-serif text-xl group-hover:text-[var(--color-accent)] transition-colors cursor-pointer"
-                                    onClick={() => setSelectedProduct(product)}
+                                    onClick={() => handleViewProduct(product)}
                                 >
                                     {product.name}
                                 </h3>
@@ -355,12 +449,50 @@ export default function ShopPage() {
                                 </div>
 
                                 {qty === 0 ? (
-                                    <button
-                                        onClick={() => handleAddToCart(product)}
-                                        className="w-full py-3 border border-[var(--color-primary)]/20 hover:bg-[var(--color-primary)] hover:text-white transition-all text-xs mt-2 font-medium"
-                                    >
-                                        Add to Cart
-                                    </button>
+                                    isProductOutOfStock(product) ? (
+                                        // Out-of-stock: show notification UI
+                                        <div className="space-y-2 mt-2">
+                                            {alertState[product.id] === 'subscribed' ? (
+                                                <div className="w-full py-3 text-xs text-center font-medium" style={{ background: '#F0FDF4', border: '1px solid #1F3D2B40', color: '#1F3D2B' }}>
+                                                    ✓ You'll be notified!
+                                                </div>
+                                            ) : alertState[product.id] === 'entering_email' ? (
+                                                <div className="flex gap-1">
+                                                    <input
+                                                        type="email"
+                                                        placeholder="Your email"
+                                                        value={alertEmail[product.id] || ''}
+                                                        onChange={e => setAlertEmail(s => ({ ...s, [product.id]: e.target.value }))}
+                                                        className="flex-1 px-2 py-1.5 border border-[#D4AF37]/50 text-xs focus:outline-none"
+                                                    />
+                                                    <button
+                                                        onClick={() => handleSubscribeAlert(product, alertEmail[product.id] || '')}
+                                                        disabled={alertState[product.id] === 'submitting'}
+                                                        className="px-3 py-1.5 text-white text-xs font-medium disabled:opacity-60"
+                                                        style={{ background: '#D4AF37' }}
+                                                    >
+                                                        Notify
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleNotifyClick(product)}
+                                                    disabled={alertState[product.id] === 'submitting'}
+                                                    className="w-full py-3 text-xs font-medium transition-all disabled:opacity-60"
+                                                    style={{ border: '1px solid #D4AF37', background: '#FFFBEB', color: '#92400E' }}
+                                                >
+                                                    {alertState[product.id] === 'submitting' ? 'Subscribing…' : 'Notify When Available'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleAddToCart(product)}
+                                            className="w-full py-3 border border-[var(--color-primary)]/20 hover:bg-[var(--color-primary)] hover:text-white transition-all text-xs mt-2 font-medium"
+                                        >
+                                            Add to Cart
+                                        </button>
+                                    )
                                 ) : (
                                     <div className="flex items-center justify-center gap-4 w-full py-3 border border-[var(--color-primary)]/20 bg-[var(--color-primary)]/5 mt-2">
                                         <button onClick={() => removeFromCart(product.id)} className="w-8 h-8 flex items-center justify-center hover:bg-white">-</button>
@@ -370,7 +502,7 @@ export default function ShopPage() {
                                 )}
 
                                 <button
-                                    onClick={() => setSelectedProduct(product)}
+                                    onClick={() => handleViewProduct(product)}
                                     className="text-[10px] opacity-50 hover:opacity-100 border-b border-transparent hover:border-[var(--color-primary)] transition-all pb-0.5 w-max mx-auto font-medium"
                                 >
                                     View Details
@@ -402,6 +534,9 @@ export default function ShopPage() {
                 </section>
             )}
 
+            {/* Recently Viewed Products */}
+            <RecentlyViewed />
+
             {/* Contact & Support Section */}
             <section className="mt-32 border-t border-[var(--color-primary)] border-opacity-10 pt-24 text-center space-y-12">
                 <h2 className="text-3xl font-serif">Contact & Support</h2>
@@ -423,6 +558,30 @@ export default function ShopPage() {
                 </div>
                 <p className="text-xs opacity-50 font-medium">Scan to follow us on Instagram</p>
             </section>
+
+            {/* Floating Compare Bar */}
+            {compareCount >= 2 && (
+                <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 pointer-events-none">
+                    <div className="pointer-events-auto flex items-center gap-4 bg-[var(--color-primary)] text-white px-6 py-3.5 shadow-2xl">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="opacity-80 shrink-0">
+                            <line x1="12" y1="3" x2="12" y2="20" />
+                            <path d="M3 9l9-6 9 6" />
+                            <path d="M5 9a4 4 0 0 0 8 0" />
+                            <path d="M11 9a4 4 0 0 0 8 0" />
+                            <line x1="4" y1="20" x2="20" y2="20" />
+                        </svg>
+                        <span className="text-sm font-medium">
+                            {compareCount} products selected
+                        </span>
+                        <a
+                            href="/compare"
+                            className="ml-2 px-5 py-2 bg-[#D4AF37] text-white text-xs font-semibold tracking-wider uppercase hover:bg-[#B8960C] transition-colors"
+                        >
+                            Compare Now
+                        </a>
+                    </div>
+                </div>
+            )}
 
             {/* Modal */}
             <ProductDetailsModal

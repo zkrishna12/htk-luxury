@@ -45,6 +45,7 @@ import { WishlistProvider } from "@/context/WishlistContext";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { RewardsProvider } from "@/context/RewardsContext";
+import { CompareProvider } from "@/context/CompareContext";
 import CartDrawer from "@/components/CartDrawer";
 import LuxuryBackground from "@/components/LuxuryBackground";
 import WhatsAppButton from "@/components/WhatsAppButton";
@@ -75,6 +76,7 @@ export default function RootLayout({
           <CurrencyProvider>
             <CartProvider>
               <WishlistProvider>
+                <CompareProvider>
                 <RewardsProvider>
                 <LuxuryBackground />
                 <Navigation />
@@ -88,6 +90,7 @@ export default function RootLayout({
                 <AbandonedCartRecovery />
                 <Footer />
                 </RewardsProvider>
+                </CompareProvider>
               </WishlistProvider>
             </CartProvider>
           </CurrencyProvider>
